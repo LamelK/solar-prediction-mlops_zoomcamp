@@ -1,4 +1,4 @@
-UNIXTime,Data,Time,Radiation,Temperature,Pressure,Humidity,WindDirection(Degrees),Speed,TimeSunRise,TimeSunSet,datetime
+UNIXTime,Data,Time,Radiation,Temperature,Pressure,Humidity,WindDirection_Degrees,Speed,TimeSunRise,TimeSunSet,datetime
 1472724008,9/1/2016 12:00:00 AM,00:00:08,2.58,51,30.43,103,77.27,11.25,06:07:00,18:38:00,2016-09-01 10:00:08
 1472724310,9/1/2016 12:00:00 AM,00:05:10,2.83,51,30.43,103,153.44,9.0,06:07:00,18:38:00,2016-09-01 10:05:10
 1472725206,9/1/2016 12:00:00 AM,00:20:06,2.16,51,30.43,103,142.04,7.87,06:07:00,18:38:00,2016-09-01 10:20:06

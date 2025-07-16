@@ -33,18 +33,13 @@ def train_tune_models(df):
     param_grids = {
         'RandomForest': [
             {}, 
-            {'n_estimators': 150, 'max_depth': None},
             {'n_estimators': 300, 'max_depth': 15},
         ],
         'XGBoost': [
-            {},
             {'n_estimators': 200, 'max_depth': 5, 'learning_rate': 0.05},
-            {'n_estimators': 300, 'max_depth': 6, 'learning_rate': 0.03},
         ],
         'CatBoost': [
             {'verbose': 0}, 
-            {'iterations': 200, 'depth': 5, 'learning_rate': 0.05, 'verbose': 0},
-            {'iterations': 300, 'depth': 6, 'learning_rate': 0.03, 'verbose': 0},
         ]
     }
 

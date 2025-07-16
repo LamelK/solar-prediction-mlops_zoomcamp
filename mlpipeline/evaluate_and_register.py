@@ -28,6 +28,31 @@ def log_test_metrics_to_mlflow(run_id, test_metrics):
         mlflow.set_tag("evaluation_status", "tested_with_separate_script")
 
 
+# @task(name="Register Best Model")
+# def register_best_model(best_run, registry_model_name="MyTopModel"):
+#     logger = get_run_logger()
+#     logger.info(f"Registering best model: Run ID {best_run['run_id']} as {registry_model_name}")
+
+#     client = MlflowClient()
+#     model_uri = f"runs:/{best_run['run_id']}/model"
+#     registered_model = mlflow.register_model(model_uri, registry_model_name)
+#     version = registered_model.version
+
+#     tags = {
+#         "model_type": best_run['model_name'],
+#         "test_rmse": str(best_run['test_rmse']),
+#         "test_r2": str(best_run['test_r2']),
+#         "model_framework": best_run['model_name']
+#     }
+
+#     for k, v in tags.items():
+#         client.set_registered_model_tag(registry_model_name, k, v)
+#         client.set_model_version_tag(registry_model_name, version, k, v)
+
+#     client.set_registered_model_alias(registry_model_name, "champion", version)
+#     logger.info(f"Model registered as version {version} with alias 'champion'")
+#     return version
+
 @task(name="Register Best Model")
 def register_best_model(best_run, registry_model_name="MyTopModel"):
     logger = get_run_logger()
@@ -41,8 +66,8 @@ def register_best_model(best_run, registry_model_name="MyTopModel"):
     tags = {
         "model_type": best_run['model_name'],
         "test_rmse": str(best_run['test_rmse']),
-        "test_r2": str(best_run['test_r2']),
-        "model_framework": best_run['model_name']
+        "model_framework": best_run['model_name'],
+        "status": "production"  # mark this version as production
     }
 
     for k, v in tags.items():
@@ -50,7 +75,14 @@ def register_best_model(best_run, registry_model_name="MyTopModel"):
         client.set_model_version_tag(registry_model_name, version, k, v)
 
     client.set_registered_model_alias(registry_model_name, "champion", version)
-    logger.info(f"Model registered as version {version} with alias 'champion'")
+    
+    # Archive old production versions by changing their status tag
+    for mv in client.search_model_versions(f"name='{registry_model_name}'"):
+        if mv.version != version and mv.tags.get("status") == "production":
+            client.set_model_version_tag(registry_model_name, mv.version, "status", "archived")
+
+
+    logger.info(f"Model registered as version {version} and marked as production")
     return version
 
 

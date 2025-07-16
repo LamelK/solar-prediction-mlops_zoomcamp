@@ -8,7 +8,7 @@ from prefect import flow, get_run_logger
 @flow(name="ML Pipeline")
 def main():
     logger = get_run_logger()
-    DATA_PATH = './data/data.csv'
+    DATA_PATH = './data/training_data.csv'
 
     logger.info("Starting data preparation...")
     df = load_and_prepare_data(DATA_PATH)
@@ -25,7 +25,7 @@ def main():
     logged_runs = log_models_to_mlflow(all_runs, X_val)
     logger.info(f"Logged {len(logged_runs)} runs to MLflow.")
 
-    logger.info("Evaluating and registering best model...")
+    logger.info("Evaluating and register best model...")
     best_run, test_results = evaluate_and_register(logged_runs, X_test, y_test)
     logger.info(f"Best model registered: {best_run}")
     logger.info("Pipeline completed successfully.")

@@ -2,45 +2,31 @@ import pandas as pd
 import numpy as np
 import boto3
 from io import StringIO
-from prefect import task, flow, get_run_logger
 
 
-@task(name="Load Data from Local")
-def load_data_local(path='../data/training_data.csv'):
-    logger = get_run_logger()
-    logger.info(f"Loading data from local path: {path}")
+def load_data_local(path='../data/inference_data.csv'):
     return pd.read_csv(path)
 
-
-@task(name="Load Data from S3")
 def load_data_s3(bucket_name, file_key, aws_profile=None):
-    logger = get_run_logger()
-    logger.info(f"Loading data from S3 bucket: {bucket_name}, key: {file_key}")
 
     session = boto3.Session(profile_name=aws_profile) if aws_profile else boto3.Session()
     s3 = session.client('s3')
     obj = s3.get_object(Bucket=bucket_name, Key=file_key)
     df = pd.read_csv(StringIO(obj['Body'].read().decode('utf-8')))
 
-    logger.info(f"Data loaded from S3: {df.shape[0]} rows, {df.shape[1]} columns")
     return df
 
 
-@task(name="Clean Data")
+
 def clean_data(df):
-    logger = get_run_logger()
-    logger.info("Cleaning data: removing duplicates and dropping all-NA rows")
     initial_shape = df.shape
     df = df.drop_duplicates()
     df = df.dropna(how='all')
-    logger.info(f"Data cleaned: {initial_shape} -> {df.shape}")
     return df
 
 
-@task(name="Feature Engineering")
 def feature_engineer(df):
-    logger = get_run_logger()
-    logger.info("Starting feature engineering")
+
 
     df['DateTime'] = pd.to_datetime(df['UNIXTime'], unit='s')
 
@@ -68,29 +54,31 @@ def feature_engineer(df):
     df['MinutesSinceSunrise'] = (df['DateTime'] - df['SunriseDateTime']).dt.total_seconds() / 60
     df['MinutesUntilSunset'] = (df['SunsetDateTime'] - df['DateTime']).dt.total_seconds() / 60
 
-    df.drop(columns=[
+    cols_to_drop = [
         'UNIXTime', 'Data', 'Time',
         'TimeSunRise', 'TimeSunSet',
         'TimeSunRise_obj', 'TimeSunSet_obj',
         'SunriseDateTime', 'SunsetDateTime',  
         'Hour', 'Minute', 'Day', 'datetime', 'DateTime',
-        'Month', 'Weekday', 
-    ], inplace=True)
+        'Month', 'Weekday','Radiation' 
+    ]
 
-    logger.info(f"Feature engineering completed. Data now has columns: {list(df.columns)}")
+    existing_cols_to_drop = [col for col in cols_to_drop if col in df.columns]
+    df.drop(columns=existing_cols_to_drop, inplace=True)
+
     return df
 
 
-@flow(name="Load and Prepare Data Pipeline")
-def load_and_prepare_data(path='../data/training_data.csv'):
-    logger = get_run_logger()
-    logger.info("Starting the full data load and preparation pipeline")
 
-    df = load_data_local(path)
+def load_and_prepare_data(df=None, path=None):
+    if df is None and path is None:
+        raise ValueError("Must provide either df or path")
+
+    if df is None:
+        df = load_data_local(path)
+
     df = clean_data(df)
     df = feature_engineer(df)
-
-    logger.info("Pipeline completed")
     return df
 
 
