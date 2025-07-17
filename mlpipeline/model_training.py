@@ -32,7 +32,6 @@ def train_tune_models(df):
 
     param_grids = {
         'RandomForest': [
-            {}, 
             {'n_estimators': 300, 'max_depth': 15},
         ],
         'XGBoost': [

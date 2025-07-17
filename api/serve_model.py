@@ -116,7 +116,7 @@ def log_to_supabase(data: dict, prediction: float):
         "TimeSunRise": data.get("TimeSunRise"),
         "TimeSunSet": data.get("TimeSunSet"),
         "datetime": data.get("datetime"),
-        "Prediction": prediction
+        "Radiation": prediction
     }
     response = supabase.table("model_logs").insert(record).execute()
 

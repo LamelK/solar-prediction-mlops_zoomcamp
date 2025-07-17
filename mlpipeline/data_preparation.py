@@ -3,13 +3,21 @@ import numpy as np
 import boto3
 from io import StringIO
 from prefect import task, flow, get_run_logger
+from typing import Optional
 
 
 @task(name="Load Data from Local")
-def load_data_local(path='../data/training_data.csv'):
+def load_data_local(path: str = None, df: pd.DataFrame = None):
     logger = get_run_logger()
-    logger.info(f"Loading data from local path: {path}")
-    return pd.read_csv(path)
+
+    if df is not None:
+        logger.info("Loading data from provided DataFrame.")
+        return df
+    elif path is not None:
+        logger.info(f"Loading data from local path: {path}")
+        return pd.read_csv(path)
+    else:
+        raise ValueError("Either 'path' or 'df' must be provided.")
 
 
 @task(name="Load Data from S3")
@@ -73,7 +81,7 @@ def feature_engineer(df):
         'TimeSunRise', 'TimeSunSet',
         'TimeSunRise_obj', 'TimeSunSet_obj',
         'SunriseDateTime', 'SunsetDateTime',  
-        'Hour', 'Minute', 'Day', 'datetime', 'DateTime',
+        'Hour', 'Minute', 'Day', 'DateTime',
         'Month', 'Weekday', 
     ], inplace=True)
 
@@ -81,18 +89,22 @@ def feature_engineer(df):
     return df
 
 
-@flow(name="Load and Prepare Data Pipeline")
-def load_and_prepare_data(path='../data/training_data.csv'):
+@flow(name="Load and Preprocess Data")
+def load_and_prepare_data(path: Optional[str] = None, df: Optional[pd.DataFrame] = None):
     logger = get_run_logger()
     logger.info("Starting the full data load and preparation pipeline")
 
-    df = load_data_local(path)
+    if df is not None:
+        logger.info("Using provided DataFrame for preparation")
+    else:
+        logger.info(f"Loading data from local path: {path}")
+        df = load_data_local(path=path)
+
     df = clean_data(df)
     df = feature_engineer(df)
 
     logger.info("Pipeline completed")
     return df
-
 
 # if __name__ == "__main__":
 #     df = load_and_prepare_data()
