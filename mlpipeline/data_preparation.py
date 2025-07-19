@@ -1,24 +1,13 @@
-import pandas as pd
-import numpy as np
-import boto3
+import pandas as pd  # type: ignore
+import numpy as np  # type: ignore
+import boto3  # type: ignore
 from io import StringIO
-from prefect import task, flow, get_run_logger
+from prefect import task, flow, get_run_logger  # type: ignore
 from typing import Optional
+import os
+from dotenv import load_dotenv  # type: ignore
 
-
-@task(name="Load Data from Local")
-def load_data_local(path: str = None, df: pd.DataFrame = None):
-    logger = get_run_logger()
-
-    if df is not None:
-        logger.info("Loading data from provided DataFrame.")
-        return df
-    elif path is not None:
-        logger.info(f"Loading data from local path: {path}")
-        return pd.read_csv(path)
-    else:
-        raise ValueError("Either 'path' or 'df' must be provided.")
-
+load_dotenv()
 
 @task(name="Load Data from S3")
 def load_data_s3(bucket_name, file_key, aws_profile=None):
@@ -33,6 +22,12 @@ def load_data_s3(bucket_name, file_key, aws_profile=None):
     logger.info(f"Data loaded from S3: {df.shape[0]} rows, {df.shape[1]} columns")
     return df
 
+@task(name="Upload processed data to S3")
+def upload_df_to_s3(df: pd.DataFrame, bucket: str, key: str):
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    s3 = boto3.client('s3')
+    s3.put_object(Bucket=bucket, Key=key, Body=csv_buffer.getvalue())
 
 @task(name="Clean Data")
 def clean_data(df):
@@ -43,7 +38,6 @@ def clean_data(df):
     df = df.dropna(how='all')
     logger.info(f"Data cleaned: {initial_shape} -> {df.shape}")
     return df
-
 
 @task(name="Feature Engineering")
 def feature_engineer(df):
@@ -88,24 +82,29 @@ def feature_engineer(df):
     logger.info(f"Feature engineering completed. Data now has columns: {list(df.columns)}")
     return df
 
-
 @flow(name="Load and Preprocess Data")
-def load_and_prepare_data(path: Optional[str] = None, df: Optional[pd.DataFrame] = None):
+def load_and_prepare_data(file_key: str, bucket_name: Optional[str] = None):
     logger = get_run_logger()
-    logger.info("Starting the full data load and preparation pipeline")
+    logger.info("Starting the data load and preprocessing flow")
 
-    if df is not None:
-        logger.info("Using provided DataFrame for preparation")
-    else:
-        logger.info(f"Loading data from local path: {path}")
-        df = load_data_local(path=path)
+    bucket = bucket_name or os.getenv("S3_BUCKET_NAME")
+    key = file_key
+    if not bucket or not key:
+        raise ValueError("Both S3 bucket name and file key must be provided (either as argument or env var for bucket, and argument for key). Only S3 loading is supported.")
+    logger.info(f"Loading data from S3: bucket={bucket}, key={key}")
+    df = load_data_s3(bucket, key)
 
     df = clean_data(df)
     df = feature_engineer(df)
 
-    logger.info("Pipeline completed")
-    return df
+    # Save processed data to S3
+    if key.startswith("raw-data/"):
+        processed_key = key.replace("raw-data/", "processed-data/")
+    else:
+        processed_key = "processed-data/" + os.path.basename(key)
+    logger.info(f"Uploading processed data to S3: bucket={bucket}, key={processed_key}")
+    upload_df_to_s3(df, bucket, processed_key)
+    logger.info("Processed data uploaded to S3.")
 
-# if __name__ == "__main__":
-#     df = load_and_prepare_data()
-#     print(df.columns)
+    logger.info("Preprocessing flow completed")
+    return df

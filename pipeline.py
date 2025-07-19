@@ -1,20 +1,38 @@
-from mlpipeline.data_preparation import load_and_prepare_data
+from mlpipeline.data_preparation import load_and_prepare_data, load_data_s3
 from mlpipeline.model_training import train_tune_models
 from mlpipeline.model_logging import log_models_to_mlflow, setup_mlflow
 from mlpipeline.evaluate_and_register import evaluate_and_register
 from prefect import flow, get_run_logger
+import os
+from config import get_s3_config, get_mlflow_config
 
 @flow(name="ML Pipeline")
-def main(df=None, data_path='./data/training_data.csv'):
+def main(bucket_name=None, raw_key=None, processed_key=None):
     logger = get_run_logger()
+    
+    # Get configuration
+    s3_config = get_s3_config()
+    mlflow_config = get_mlflow_config()
+    
+    # Use provided parameters or fall back to configuration
+    bucket = bucket_name or s3_config["bucket_name"]
+    raw_key = raw_key or s3_config["raw_baseline_key"]
+    processed_key = processed_key or s3_config["processed_data_key"]
+    
+    if not bucket:
+        raise ValueError("S3 bucket name must be provided as an argument or in the S3_BUCKET_NAME environment variable.")
 
-    if df is None:
-        logger.info(f"Loading and preprocessing data from path: {data_path}")
-        df = load_and_prepare_data(path=data_path)
-    else:
-        logger.info(f"Preprocessing passed DataFrame with shape: {df.shape}")
-        df = load_and_prepare_data(df=df)
+    # Step 1: Preprocess raw data and save processed data to S3
+    logger.info("Running data preparation...")
+    logger.info(f"Using raw data from: s3://{bucket}/{raw_key}")
+    load_and_prepare_data(file_key=raw_key, bucket_name=bucket)
 
+    # Step 2: Load processed data from S3
+    logger.info("Loading processed data from S3 for model training...")
+    logger.info(f"Loading from: s3://{bucket}/{processed_key}")
+    df = load_data_s3(bucket, processed_key)
+
+    # Step 3: Model training and subsequent steps
     logger.info(f"Data prepared: {df.shape[0]} rows, {df.shape[1]} columns")
 
     logger.info("Training and tuning models...")
@@ -22,7 +40,8 @@ def main(df=None, data_path='./data/training_data.csv'):
     logger.info(f"Model tuning completed. Total runs: {len(all_runs)}")
 
     logger.info("Setting up MLflow...")
-    setup_mlflow()
+    logger.info(f"MLflow tracking URI: {mlflow_config['tracking_uri']}")
+    setup_mlflow(tracking_uri=mlflow_config['tracking_uri'], experiment_name=mlflow_config['experiment_name'])
 
     logger.info("Logging models to MLflow...")
     logged_runs = log_models_to_mlflow(all_runs, X_val)

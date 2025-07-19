@@ -1,72 +1,3 @@
-# from fastapi import FastAPI, UploadFile, File, HTTPException, Body
-# import pandas as pd
-# import mlflow.pyfunc
-# from mlflow.tracking import MlflowClient
-# from typing import List, Union
-# from mlpipeline.preprocessing_utils import load_and_prepare_data
-# from api.schemas import RawInputData  
-
-# app = FastAPI()
-
-# mlflow.set_tracking_uri("http://localhost:5000")
-# MODEL_NAME = "MyTopModel"
-
-# def get_production_model_version(model_name):
-#     client = MlflowClient()
-#     versions = client.search_model_versions(f"name='{model_name}'")
-#     for v in versions:
-#         if v.tags.get("status") == "production":
-#             return v.version
-#     raise RuntimeError(f"No production model version found for '{model_name}'")
-
-# try:
-#     prod_version = get_production_model_version(MODEL_NAME)
-#     model_uri = f"models:/{MODEL_NAME}/{prod_version}"
-#     model = mlflow.pyfunc.load_model(model_uri)
-# except Exception as e:
-#     raise RuntimeError(f"Failed to load production model: {e}")
-
-# @app.get("/")
-# async def root():
-#     return {"message": "ML Model API is running"}
-
-# @app.post("/predict")
-# async def predict_json(
-#     data: Union[RawInputData, List[RawInputData]] = Body(...)
-# ):
-#     """
-#     Accept either a single JSON object or a list of JSON objects validated by Pydantic.
-#     """
-#     try:
-#         if isinstance(data, RawInputData):
-#             # Single object -> wrap in list
-#             data_list = [data.dict()]
-#         else:
-#             # List of objects
-#             data_list = [item.dict() for item in data]
-
-#         df_raw = pd.DataFrame(data_list)
-#         df_preprocessed = load_and_prepare_data(df=df_raw)
-
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=f"Invalid JSON data or preprocessing failed: {e}")
-
-#     preds = model.predict(df_preprocessed)
-#     return {"predictions": preds.tolist()}
-
-# @app.post("/predict_csv")
-# async def predict_csv(file: UploadFile = File(...)):
-#     if not file.filename.endswith(".csv"):
-#         raise HTTPException(status_code=400, detail="Only CSV files are supported.")
-#     try:
-#         df_raw = pd.read_csv(file.file)
-#         df_preprocessed = load_and_prepare_data(df=df_raw)
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=f"Error processing CSV: {e}")
-
-#     preds = model.predict(df_preprocessed)
-#     return {"predictions": preds.tolist()}
-
 from fastapi import FastAPI, UploadFile, File, HTTPException, Body
 import pandas as pd
 import mlflow.pyfunc
@@ -76,12 +7,25 @@ from datetime import datetime
 from supabase import create_client, Client
 from mlpipeline.preprocessing_utils import load_and_prepare_data
 from api.schemas import RawInputData  
+import os
+from dotenv import load_dotenv
+from config import get_mlflow_config, get_s3_config, get_supabase_config
+
+load_dotenv()
+
+# Get configuration
+mlflow_config = get_mlflow_config()
+s3_config = get_s3_config()
+supabase_config = get_supabase_config()
+
+# MLflow tracking URI - points to EC2 instance with SQLite backend and S3 artifacts
+mlflow.set_tracking_uri(mlflow_config["tracking_uri"])
 
 app = FastAPI()
 
 # MLflow setup
-mlflow.set_tracking_uri("http://localhost:5000")
-MODEL_NAME = "MyTopModel"
+# mlflow.set_tracking_uri("http://localhost:5000")
+MODEL_NAME = mlflow_config["model_name"]
 
 def get_production_model_version(model_name):
     client = MlflowClient()
@@ -99,9 +43,7 @@ except Exception as e:
     raise RuntimeError(f"Failed to load production model: {e}")
 
 # Supabase setup
-SUPABASE_URL = "https://ccfmfqtlizzbaxlshzbu.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZm1mcXRsaXp6YmF4bHNoemJ1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjY2NzQwMiwiZXhwIjoyMDY4MjQzNDAyfQ.oa_2mmgazvIaiDk8BnymXiXZACb0iLRGmnnlGS0xhhE"
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = create_client(supabase_config["url"], supabase_config["key"])
 
 def log_to_supabase(data: dict, prediction: float):
     record = {

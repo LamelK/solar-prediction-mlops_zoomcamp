@@ -1,0 +1,41 @@
+# MLflow Configuration
+# Replace YOUR_EC2_PUBLIC_IP with your actual EC2 instance public IP
+MLFLOW_TRACKING_URI=http://YOUR_EC2_PUBLIC_IP:5000
+MLFLOW_EXPERIMENT_NAME=My_Model_Experiment
+
+# S3 Configuration
+S3_BUCKET_NAME=model-data-bucket-4821
+S3_ARTIFACT_PREFIX=mlflow-artifacts/
+
+# Model Configuration
+MODEL_NAME=MyTopModel
+
+# Supabase Configuration
+SUPABASE_URL=https://ccfmfqtlizzbaxlshzbu.supabase.co
+SUPABASE_KEY=your_supabase_key_here
+
+# Data Configuration
+RAW_BASELINE_KEY=raw-data/training_data.csv
+NEW_DATA_KEY=raw-data/new_data/new_data.csv
+PROCESSED_DATA_KEY=processed-data/training_data.csv
+
+# AWS Configuration (if needed for local development)
+AWS_REGION=us-west-1
+AWS_ACCESS_KEY_ID=your_access_key_here
+AWS_SECRET_ACCESS_KEY=your_secret_key_here
+AWS_DEFAULT_REGION=us-west-1
+
+# Monitoring Configuration
+DISTANCE_FEATURE_THRESHOLD=0.1
+MONITORING_PORT=8080
+MONITORING_INTERVAL=3600
+
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+API_RELOAD=True
+
+# Development/Environment Configuration
+ENVIRONMENT=development
+DEBUG=False
+LOG_LEVEL=INFO 

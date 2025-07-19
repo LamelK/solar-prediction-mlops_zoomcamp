@@ -2,11 +2,18 @@ import mlflow
 import mlflow.sklearn
 from mlflow.models.signature import infer_signature
 from prefect import task, get_run_logger
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @task(name="Setup MLflow")
-def setup_mlflow(tracking_uri="http://localhost:5000", experiment_name="My_Model_Experiment"):
+def setup_mlflow(tracking_uri=None, experiment_name="My_Model_Experiment"):
     logger = get_run_logger()
+    if tracking_uri is None:
+        # Use EC2 MLflow server if available, fallback to localhost for development
+        tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
     logger.info(f"Setting MLflow tracking URI: {tracking_uri} and experiment: {experiment_name}")
     
     mlflow.set_tracking_uri(tracking_uri)

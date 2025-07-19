@@ -1,21 +1,5 @@
 import pandas as pd
 import numpy as np
-import boto3
-from io import StringIO
-
-
-def load_data_local(path='../data/inference_data.csv'):
-    return pd.read_csv(path)
-
-def load_data_s3(bucket_name, file_key, aws_profile=None):
-
-    session = boto3.Session(profile_name=aws_profile) if aws_profile else boto3.Session()
-    s3 = session.client('s3')
-    obj = s3.get_object(Bucket=bucket_name, Key=file_key)
-    df = pd.read_csv(StringIO(obj['Body'].read().decode('utf-8')))
-
-    return df
-
 
 
 def clean_data(df):
@@ -26,7 +10,10 @@ def clean_data(df):
 
 
 def feature_engineer(df):
-
+    """
+    Feature engineering function that matches exactly what was used during training.
+    For inference data, the 'Radiation' column won't exist since that's what we're predicting.
+    """
 
     df['DateTime'] = pd.to_datetime(df['UNIXTime'], unit='s')
 
@@ -54,14 +41,19 @@ def feature_engineer(df):
     df['MinutesSinceSunrise'] = (df['DateTime'] - df['SunriseDateTime']).dt.total_seconds() / 60
     df['MinutesUntilSunset'] = (df['SunsetDateTime'] - df['DateTime']).dt.total_seconds() / 60
 
+    # Columns to drop - same as training preprocessing
+    # Note: For inference, 'Radiation' column won't exist since that's what we're predicting
     cols_to_drop = [
         'UNIXTime', 'Data', 'Time',
         'TimeSunRise', 'TimeSunSet',
         'TimeSunRise_obj', 'TimeSunSet_obj',
         'SunriseDateTime', 'SunsetDateTime',  
-        'Hour', 'Minute', 'Day', 'datetime', 'DateTime',
-        'Month', 'Weekday','Radiation' 
+        'Hour', 'Minute', 'Day', 'DateTime',
+        'Month', 'Weekday'
     ]
+    
+    # For inference data, 'Radiation' column won't exist since that's what we're predicting
+    # So we don't need to handle dropping it
 
     existing_cols_to_drop = [col for col in cols_to_drop if col in df.columns]
     df.drop(columns=existing_cols_to_drop, inplace=True)
@@ -69,13 +61,19 @@ def feature_engineer(df):
     return df
 
 
-
-def load_and_prepare_data(df=None, path=None):
-    if df is None and path is None:
-        raise ValueError("Must provide either df or path")
-
+def load_and_prepare_data(df):
+    """
+    Load and prepare data for model inference.
+    This function should produce the same features as the training preprocessing.
+    
+    Args:
+        df: DataFrame with raw input data (no Radiation column)
+    
+    Returns:
+        DataFrame with processed features ready for model prediction
+    """
     if df is None:
-        df = load_data_local(path)
+        raise ValueError("DataFrame must be provided")
 
     df = clean_data(df)
     df = feature_engineer(df)
