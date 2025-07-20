@@ -1,0 +1,66 @@
+# Git files
+.git
+.gitignore
+
+# Python cache files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (to avoid recursive copying)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+*.md
+docs/
+
+# Data files (if they're large)
+*.csv
+*.json
+*.parquet
+data/
+
+# MLflow runs (local)
+mlruns/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Jupyter notebooks
+*.ipynb
+notebooks/
+
+# Terraform files
+terraform/
+
+# Monitoring (keep only what's needed)
+monitoring/*.py
+!monitoring/monitor_drift.py
+
+# Catboost info (model artifacts)
+catboost_info/ 

@@ -5,3 +5,11 @@ requests
 supabase
 boto3
 prefect
+pydantic
+python-dotenv
+pandas
+numpy==2.0.2
+scikit-learn
+scipy
+prometheus-client
+evidently==0.6.7

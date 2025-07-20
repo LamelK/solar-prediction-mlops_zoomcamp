@@ -1,0 +1,5 @@
+# ML pipeline specific packages only
+# Common packages are in base image
+scikit-learn
+scipy
+boto3 

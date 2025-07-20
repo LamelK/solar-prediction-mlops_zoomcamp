@@ -115,66 +115,68 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# EC2 instance for MLflow
 resource "aws_instance" "mlflow_server" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.ec2_instance_type
-  subnet_id              = data.aws_subnets.default.ids[0]
-  vpc_security_group_ids = [aws_security_group.mlflow_ec2_sg.id]
-  iam_instance_profile   = aws_iam_instance_profile.mlflow_ec2_profile.name
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = var.ec2_instance_type
+  subnet_id                  = data.aws_subnets.default.ids[0]
+  vpc_security_group_ids      = [aws_security_group.mlflow_ec2_sg.id]
+  iam_instance_profile        = aws_iam_instance_profile.mlflow_ec2_profile.name
   associate_public_ip_address = true
-  key_name               = aws_key_pair.mlflow_key.key_name
-  tags = var.tags
+  key_name                   = aws_key_pair.mlflow_key.key_name
+  tags                       = var.tags
 
   user_data = <<-EOF
     #!/bin/bash
     set -e
-    exec > >(tee /var/log/user-data.log|logger -t user-data) 2>&1
+    exec > >(tee /var/log/user-data.log | logger -t user-data) 2>&1
 
     echo "Starting user data script..."
 
-    # Update package list
+    # Update package list and install required packages
     apt-get update
-
-    # Install required packages
     apt-get install -y python3-pip python3-venv curl wget
 
     # Create a virtual environment for MLflow
     python3 -m venv /opt/mlflow
     source /opt/mlflow/bin/activate
 
-    # Upgrade pip and install MLflow
+    # Upgrade pip and install MLflow + boto3
     pip install --upgrade pip
     pip install mlflow boto3
 
-    # Create MLflow directory
+    # Create MLflow data directory
     mkdir -p /opt/mlflow/data
 
-    # Create systemd service file for MLflow (using echo to avoid nested heredoc)
-    echo '[Unit]' > /etc/systemd/system/mlflow.service
-    echo 'Description=MLflow Tracking Server' >> /etc/systemd/system/mlflow.service
-    echo 'After=network.target' >> /etc/systemd/system/mlflow.service
-    echo '' >> /etc/systemd/system/mlflow.service
-    echo '[Service]' >> /etc/systemd/system/mlflow.service
-    echo 'Type=simple' >> /etc/systemd/system/mlflow.service
-    echo 'User=ubuntu' >> /etc/systemd/system/mlflow.service
-    echo 'Group=ubuntu' >> /etc/systemd/system/mlflow.service
-    echo 'WorkingDirectory=/opt/mlflow' >> /etc/systemd/system/mlflow.service
-    echo 'Environment=PATH=/opt/mlflow/bin' >> /etc/systemd/system/mlflow.service
-    echo 'Environment=AWS_REGION=${var.aws_region}' >> /etc/systemd/system/mlflow.service
-    echo 'Environment=S3_BUCKET_NAME=${var.s3_bucket_name}' >> /etc/systemd/system/mlflow.service
-    echo 'Environment=S3_ARTIFACT_PREFIX=${var.s3_artifact_prefix}' >> /etc/systemd/system/mlflow.service
-    echo 'ExecStart=/opt/mlflow/bin/mlflow server --backend-store-uri /opt/mlflow/data/mlflow.db --default-artifact-root s3://${var.s3_bucket_name}/${var.s3_artifact_prefix} --host 0.0.0.0 --port 5000' >> /etc/systemd/system/mlflow.service
-    echo 'Restart=always' >> /etc/systemd/system/mlflow.service
-    echo 'RestartSec=10' >> /etc/systemd/system/mlflow.service
-    echo '' >> /etc/systemd/system/mlflow.service
-    echo '[Install]' >> /etc/systemd/system/mlflow.service
-    echo 'WantedBy=multi-user.target' >> /etc/systemd/system/mlflow.service
+    # Create systemd service file for MLflow
+    cat << EOT > /etc/systemd/system/mlflow.service
+    [Unit]
+    Description=MLflow Tracking Server
+    After=network.target
 
-    # Set proper permissions
+    [Service]
+    Type=simple
+    User=ubuntu
+    Group=ubuntu
+    WorkingDirectory=/opt/mlflow
+    Environment=PATH=/opt/mlflow/bin
+    Environment=AWS_REGION=${var.aws_region}
+    Environment=S3_BUCKET_NAME=${var.s3_bucket_name}
+    Environment=S3_ARTIFACT_PREFIX=${var.s3_artifact_prefix}
+    ExecStart=/opt/mlflow/bin/mlflow server \\
+      --backend-store-uri /opt/mlflow/data/mlflow.db \\
+      --default-artifact-root s3://${var.s3_bucket_name}/${var.s3_artifact_prefix} \\
+      --host 0.0.0.0 --port 5000
+    Restart=always
+    RestartSec=10
+
+    [Install]
+    WantedBy=multi-user.target
+    EOT
+
+    # Set ownership to ubuntu user
     chown -R ubuntu:ubuntu /opt/mlflow
 
-    # Enable and start MLflow service
+    # Enable and start the MLflow service
     systemctl daemon-reload
     systemctl enable mlflow
     systemctl start mlflow
@@ -184,6 +186,7 @@ resource "aws_instance" "mlflow_server" {
     systemctl status mlflow --no-pager
   EOF
 }
+
 
 output "mlflow_server_public_ip" {
   value = aws_instance.mlflow_server.public_ip

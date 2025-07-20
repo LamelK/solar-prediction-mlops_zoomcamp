@@ -1,0 +1,4 @@
+# Monitoring specific packages only
+# Common packages are in base image
+evidently
+prometheus-client 

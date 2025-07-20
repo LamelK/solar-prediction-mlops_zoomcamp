@@ -1,0 +1,6 @@
+# API service specific packages only
+# Common packages are in base image
+fastapi
+uvicorn
+supabase
+boto3 
