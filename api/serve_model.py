@@ -23,8 +23,6 @@ mlflow.set_tracking_uri(mlflow_config["tracking_uri"])
 
 app = FastAPI()
 
-# MLflow setup
-# mlflow.set_tracking_uri("http://localhost:5000")
 MODEL_NAME = mlflow_config["model_name"]
 
 def get_production_model_version(model_name):

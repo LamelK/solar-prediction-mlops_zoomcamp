@@ -12,8 +12,11 @@ load_dotenv()
 def setup_mlflow(tracking_uri=None, experiment_name="My_Model_Experiment"):
     logger = get_run_logger()
     if tracking_uri is None:
-        # Use EC2 MLflow server if available, fallback to localhost for development
-        tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+        # Use EC2 MLflow server - no fallback to localhost
+        tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+        if not tracking_uri:
+            raise ValueError("MLFLOW_TRACKING_URI environment variable must be set")
+    
     logger.info(f"Setting MLflow tracking URI: {tracking_uri} and experiment: {experiment_name}")
     
     mlflow.set_tracking_uri(tracking_uri)
@@ -53,5 +56,5 @@ def log_models_to_mlflow(all_runs, X_val):
                 **run
             })
 
-    logger.info("All models logged to MLflow")
+    logger.info("All models logged successfully")
     return logged_runs

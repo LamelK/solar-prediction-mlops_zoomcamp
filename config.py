@@ -8,113 +8,63 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# MLflow Configuration
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
-MLFLOW_EXPERIMENT_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "My_Model_Experiment")
+# MLflow configuration
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
+if not MLFLOW_TRACKING_URI:
+    raise ValueError("MLFLOW_TRACKING_URI environment variable must be set")
 
-# S3 Configuration
-S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "model-data-bucket-4821")
-S3_ARTIFACT_PREFIX = os.getenv("S3_ARTIFACT_PREFIX", "mlflow-artifacts/")
+MLFLOW_MODEL_NAME = os.getenv("MLFLOW_MODEL_NAME", "MyTopModel")
 
-# Model Configuration
-MODEL_NAME = os.getenv("MODEL_NAME", "MyTopModel")
+# S3 configuration
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+if not S3_BUCKET_NAME:
+    raise ValueError("S3_BUCKET_NAME environment variable must be set")
 
-# Supabase Configuration
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://ccfmfqtlizzbaxlshzbu.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+S3_RAW_BASELINE_KEY = os.getenv("S3_RAW_BASELINE_KEY", "data/raw_baseline.csv")
+S3_PROCESSED_DATA_KEY = os.getenv("S3_PROCESSED_DATA_KEY", "data/processed_data.csv")
 
-# Data Configuration
-RAW_BASELINE_KEY = os.getenv("RAW_BASELINE_KEY", "raw-data/training_data.csv")
-NEW_DATA_KEY = os.getenv("NEW_DATA_KEY", "raw-data/new_data/new_data.csv")
-PROCESSED_DATA_KEY = os.getenv("PROCESSED_DATA_KEY", "processed-data/training_data.csv")
+# Supabase configuration
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+if not SUPABASE_URL:
+    raise ValueError("SUPABASE_URL environment variable must be set")
 
-# AWS Configuration
-AWS_REGION = os.getenv("AWS_REGION", "us-west-1")
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
-AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-west-1")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+if not SUPABASE_KEY:
+    raise ValueError("SUPABASE_KEY environment variable must be set")
 
-# Monitoring Configuration
-DISTANCE_FEATURE_THRESHOLD = float(os.getenv("DISTANCE_FEATURE_THRESHOLD", "0.1"))
+# AWS configuration
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+
+# Monitoring configuration
 MONITORING_PORT = int(os.getenv("MONITORING_PORT", "8080"))
-MONITORING_INTERVAL = int(os.getenv("MONITORING_INTERVAL", "3600"))  # seconds (1 hour)
-
-# API Configuration
-API_HOST = os.getenv("API_HOST", "0.0.0.0")
-API_PORT = int(os.getenv("API_PORT", "8000"))
-API_RELOAD = os.getenv("API_RELOAD", "True").lower() == "true"
-
-# Development/Environment Configuration
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development, staging, production
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+MONITORING_INTERVAL = int(os.getenv("MONITORING_INTERVAL", "300"))  # 5 minutes
 
 def get_mlflow_config():
-    """Get MLflow configuration dictionary."""
     return {
         "tracking_uri": MLFLOW_TRACKING_URI,
-        "experiment_name": MLFLOW_EXPERIMENT_NAME,
-        "model_name": MODEL_NAME
+        "model_name": MLFLOW_MODEL_NAME
     }
 
 def get_s3_config():
-    """Get S3 configuration dictionary."""
     return {
         "bucket_name": S3_BUCKET_NAME,
-        "artifact_prefix": S3_ARTIFACT_PREFIX,
-        "raw_baseline_key": RAW_BASELINE_KEY,
-        "new_data_key": NEW_DATA_KEY,
-        "processed_data_key": PROCESSED_DATA_KEY
-    }
-
-def get_aws_config():
-    """Get AWS configuration dictionary."""
-    return {
-        "region": AWS_REGION,
+        "raw_baseline_key": S3_RAW_BASELINE_KEY,
+        "processed_data_key": S3_PROCESSED_DATA_KEY,
         "access_key_id": AWS_ACCESS_KEY_ID,
         "secret_access_key": AWS_SECRET_ACCESS_KEY,
-        "default_region": AWS_DEFAULT_REGION
+        "region": AWS_DEFAULT_REGION
     }
 
 def get_supabase_config():
-    """Get Supabase configuration dictionary."""
     return {
         "url": SUPABASE_URL,
         "key": SUPABASE_KEY
     }
 
 def get_monitoring_config():
-    """Get monitoring configuration dictionary."""
     return {
-        "distance_feature_threshold": DISTANCE_FEATURE_THRESHOLD,
         "port": MONITORING_PORT,
         "interval": MONITORING_INTERVAL
-    }
-
-def get_api_config():
-    """Get API configuration dictionary."""
-    return {
-        "host": API_HOST,
-        "port": API_PORT,
-        "reload": API_RELOAD
-    }
-
-def get_environment_config():
-    """Get environment configuration dictionary."""
-    return {
-        "environment": ENVIRONMENT,
-        "debug": DEBUG,
-        "log_level": LOG_LEVEL
-    }
-
-def get_all_config():
-    """Get all configuration as a single dictionary."""
-    return {
-        "mlflow": get_mlflow_config(),
-        "s3": get_s3_config(),
-        "aws": get_aws_config(),
-        "supabase": get_supabase_config(),
-        "monitoring": get_monitoring_config(),
-        "api": get_api_config(),
-        "environment": get_environment_config()
     } 
