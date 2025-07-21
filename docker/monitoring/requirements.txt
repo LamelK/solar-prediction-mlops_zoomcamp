@@ -1,4 +1,4 @@
 # Monitoring specific packages only
 # Common packages are in base image
-evidently
+evidently==0.6.7
 prometheus-client 

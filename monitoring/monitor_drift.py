@@ -3,6 +3,9 @@ import time
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import boto3
+from sklearn.metrics import mean_squared_error
+import io
 import random
 import numpy as np
 import pandas as pd
@@ -483,9 +486,7 @@ def clear_model_logs():
         print("Failed to clear model_logs:", e)
 
 def compute_rmse_with_ground_truth(recent):
-    import boto3
-    from sklearn.metrics import mean_squared_error
-    import io
+
     # Fetch ground truth from S3 (raw-data/new_data/new_data.csv)
     s3 = boto3.client('s3')
     key = 'raw-data/new_data/new_data.csv'
