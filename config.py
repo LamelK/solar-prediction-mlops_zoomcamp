@@ -14,6 +14,7 @@ if not MLFLOW_TRACKING_URI:
     raise ValueError("MLFLOW_TRACKING_URI environment variable must be set")
 
 MLFLOW_MODEL_NAME = os.getenv("MLFLOW_MODEL_NAME", "MyTopModel")
+MLFLOW_EXPERIMENT_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "My_Model_Experiment")
 
 # S3 configuration
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
@@ -44,7 +45,8 @@ MONITORING_INTERVAL = int(os.getenv("MONITORING_INTERVAL", "300"))  # 5 minutes
 def get_mlflow_config():
     return {
         "tracking_uri": MLFLOW_TRACKING_URI,
-        "model_name": MLFLOW_MODEL_NAME
+        "model_name": MLFLOW_MODEL_NAME,
+        "experiment_name": MLFLOW_EXPERIMENT_NAME
     }
 
 def get_s3_config():
