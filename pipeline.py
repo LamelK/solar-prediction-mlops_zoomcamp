@@ -8,9 +8,13 @@ from config import get_s3_config, get_mlflow_config
 
 @flow(name="ML Pipeline")
 def main(bucket_name=None, raw_key=None, processed_key=None):
+    """
+    Main pipeline flow for data preparation, model training, logging, and evaluation.
+    Accepts optional S3 bucket and key overrides.
+    """
     logger = get_run_logger()
     
-    # Get configuration
+    # Retrieve configuration for S3 and MLflow
     s3_config = get_s3_config()
     mlflow_config = get_mlflow_config()
     
@@ -27,7 +31,7 @@ def main(bucket_name=None, raw_key=None, processed_key=None):
     logger.info(f"Using raw data from: s3://{bucket}/{raw_key}")
     load_and_prepare_data(file_key=raw_key, bucket_name=bucket)
 
-    # Step 2: Load processed data from S3
+    # Step 2: Load processed data from S3 for model training
     logger.info("Loading processed data from S3 for model training...")
     logger.info(f"Loading from: s3://{bucket}/{processed_key}")
     df = load_data_s3(bucket, processed_key)
@@ -39,18 +43,22 @@ def main(bucket_name=None, raw_key=None, processed_key=None):
     all_runs, X_val, X_test, y_test = train_tune_models(df)
     logger.info(f"Model tuning completed. Total runs: {len(all_runs)}")
 
+    # Set up MLflow tracking and experiment
     logger.info("Setting up MLflow...")
     logger.info(f"MLflow tracking URI: {mlflow_config['tracking_uri']}")
     setup_mlflow(tracking_uri=mlflow_config['tracking_uri'], experiment_name=mlflow_config['experiment_name'])
 
+    # Log models to MLflow
     logger.info("Logging models to MLflow...")
     logged_runs = log_models_to_mlflow(all_runs, X_val)
     logger.info(f"Logged {len(logged_runs)} runs to MLflow.")
 
+    # Evaluate and register the best model
     logger.info("Evaluating and registering best model...")
     best_run, test_results = evaluate_and_register(logged_runs, X_test, y_test)
     logger.info(f"Best model registered: {best_run}")
     logger.info("Pipeline completed successfully.")
 
 if __name__ == "__main__":
+    # Entry point for running the pipeline directly
     main()

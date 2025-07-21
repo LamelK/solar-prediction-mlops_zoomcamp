@@ -3,6 +3,9 @@ import numpy as np
 
 
 def clean_data(df):
+    """
+    Remove duplicate rows and drop rows where all values are NA.
+    """
     initial_shape = df.shape
     df = df.drop_duplicates()
     df = df.dropna(how='all')
@@ -11,18 +14,20 @@ def clean_data(df):
 
 def feature_engineer(df):
     """
-    Feature engineering function that matches exactly what was used during training.
-    For inference data, the 'Radiation' column won't exist since that's what we're predicting.
+    Add time-based and cyclical features to the DataFrame for inference.
+    Drops columns that are no longer needed after feature creation.
     """
 
     df['DateTime'] = pd.to_datetime(df['UNIXTime'], unit='s')
 
+    # Extract time features
     df['Hour'] = df['DateTime'].dt.hour
     df['Minute'] = df['DateTime'].dt.minute
     df['Day'] = df['DateTime'].dt.day
     df['Month'] = df['DateTime'].dt.month
     df['Weekday'] = df['DateTime'].dt.weekday
 
+    # Add cyclical encodings for time features
     df['Hour_sin'] = np.sin(2 * np.pi * df['Hour'] / 24)
     df['Hour_cos'] = np.cos(2 * np.pi * df['Hour'] / 24)
     df['Minute_sin'] = np.sin(2 * np.pi * df['Minute'] / 60)
@@ -34,6 +39,7 @@ def feature_engineer(df):
     df['Weekday_sin'] = np.sin(2 * np.pi * df['Weekday'] / 7)
     df['Weekday_cos'] = np.cos(2 * np.pi * df['Weekday'] / 7)
 
+    # Calculate sunrise and sunset related features
     df['TimeSunRise_obj'] = pd.to_timedelta(df['TimeSunRise'])
     df['TimeSunSet_obj'] = pd.to_timedelta(df['TimeSunSet'])
     df['SunriseDateTime'] = df['DateTime'].dt.normalize() + df['TimeSunRise_obj']
@@ -42,7 +48,6 @@ def feature_engineer(df):
     df['MinutesUntilSunset'] = (df['SunsetDateTime'] - df['DateTime']).dt.total_seconds() / 60
 
     # Columns to drop - same as training preprocessing
-    # Note: For inference, 'Radiation' column won't exist since that's what we're predicting
     cols_to_drop = [
         'UNIXTime', 'Data', 'Time',
         'TimeSunRise', 'TimeSunSet',
@@ -51,10 +56,7 @@ def feature_engineer(df):
         'Hour', 'Minute', 'Day', 'DateTime',
         'Month', 'Weekday'
     ]
-    
-    # For inference data, 'Radiation' column won't exist since that's what we're predicting
-    # So we don't need to handle dropping it
-
+    # For inference data, 'Radiation' column won't exist since that's what is being predicted
     existing_cols_to_drop = [col for col in cols_to_drop if col in df.columns]
     df.drop(columns=existing_cols_to_drop, inplace=True)
 
@@ -63,12 +65,9 @@ def feature_engineer(df):
 
 def load_and_prepare_data(df):
     """
-    Load and prepare data for model inference.
-    This function should produce the same features as the training preprocessing.
-    
+    Prepare data for model inference by cleaning and feature engineering.
     Args:
         df: DataFrame with raw input data (no Radiation column)
-    
     Returns:
         DataFrame with processed features ready for model prediction
     """
