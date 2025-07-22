@@ -1,12 +1,13 @@
 from pydantic import BaseModel, Field
 from pydantic import ConfigDict
-from typing import Optional
+
 
 class RawInputData(BaseModel):
     """
     Pydantic model for raw input data expected by the prediction API.
     Each field includes an example for documentation and validation.
     """
+
     UNIXTime: int = Field(..., json_schema_extra={"example": 1481298952})
     Data: str = Field(..., json_schema_extra={"example": "12/9/2016 12:00:00 AM"})
     Time: str = Field(..., json_schema_extra={"example": "05:55:52"})
@@ -20,4 +21,3 @@ class RawInputData(BaseModel):
     datetime: str = Field(..., json_schema_extra={"example": "2016-12-09 15:55:52"})
 
     model_config = ConfigDict(validate_assignment=True)
-

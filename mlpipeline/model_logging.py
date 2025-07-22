@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env if present
 load_dotenv()
 
+
 @task(name="Setup MLflow")
 def setup_mlflow(tracking_uri=None, experiment_name="My_Model_Experiment"):
     """
@@ -20,13 +21,16 @@ def setup_mlflow(tracking_uri=None, experiment_name="My_Model_Experiment"):
         tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
         if not tracking_uri:
             raise ValueError("MLFLOW_TRACKING_URI environment variable must be set")
-    
-    logger.info(f"Setting MLflow tracking URI: {tracking_uri} and experiment: {experiment_name}")
-    
+
+    logger.info(
+        f"Setting MLflow tracking URI: {tracking_uri} and experiment: {experiment_name}"
+    )
+
     # Set MLflow tracking URI and experiment
     mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(experiment_name)
     logger.info("MLflow configured successfully")
+
 
 @task(name="Log Models to MLflow")
 def log_models_to_mlflow(all_runs, X_val):
@@ -40,34 +44,33 @@ def log_models_to_mlflow(all_runs, X_val):
     logged_runs = []  # Store metadata for each logged run
 
     for idx, run in enumerate(all_runs, 1):
-        logger.info(f"Logging model {idx}: {run['model_name']} with params {run['params']}")
+        logger.info(
+            f"Logging model {idx}: {run['model_name']} with params {run['params']}"
+        )
         # Start a new MLflow run for each model
         with mlflow.start_run(run_name=f"{run['model_name']}_run_{idx}") as mlflow_run:
             # Log model parameters and validation metrics
-            mlflow.log_params(run['params'])
-            mlflow.log_metrics({'val_rmse': run['val_rmse'], 'val_r2': run['val_r2']})
+            mlflow.log_params(run["params"])
+            mlflow.log_metrics({"val_rmse": run["val_rmse"], "val_r2": run["val_r2"]})
 
             # Prepare input data and signature for model logging
-            input_data = X_val[run['features']]
-            predictions = run['model'].predict(input_data)
+            input_data = X_val[run["features"]]
+            predictions = run["model"].predict(input_data)
             signature = infer_signature(input_data, predictions)
 
             # Log the model to MLflow with input example and signature
             mlflow.sklearn.log_model(
-                sk_model=run['model'],
+                sk_model=run["model"],
                 name="model",
                 signature=signature,
-                input_example=input_data.iloc[:5]
+                input_example=input_data.iloc[:5],
             )
 
             run_id = mlflow_run.info.run_id
             logger.info(f"Model logged with MLflow run ID: {run_id}")
 
             # Store run metadata for later use (e.g., evaluation/registration)
-            logged_runs.append({
-                'run_id': run_id,
-                **run
-            })
+            logged_runs.append({"run_id": run_id, **run})
 
     logger.info("All models logged successfully")
     return logged_runs

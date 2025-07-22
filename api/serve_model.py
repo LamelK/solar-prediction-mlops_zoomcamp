@@ -5,8 +5,7 @@ from mlflow.tracking import MlflowClient
 from typing import List, Union
 from supabase import create_client, Client
 from mlpipeline.preprocessing_utils import load_and_prepare_data
-from api.schemas import RawInputData  
-import os
+from api.schemas import RawInputData
 from dotenv import load_dotenv
 from config import get_mlflow_config, get_s3_config, get_supabase_config
 from pydantic import ValidationError
@@ -24,10 +23,12 @@ app = FastAPI()
 
 MODEL_NAME = mlflow_config["model_name"]
 
+
 def get_production_model_version(model_name):
     """
-    Retrieve the version number of the current production model from MLflow Model Registry.
-    Raises an error if no production version is found.
+    Retrieve the version number of the current production model
+    from MLflow Model Registry.Raises an error if no production
+    version is found.
     """
     client = MlflowClient()
     versions = client.search_model_versions(f"name='{model_name}'")
@@ -35,6 +36,7 @@ def get_production_model_version(model_name):
         if v.tags.get("status") == "production":
             return v.version
     raise RuntimeError(f"No production model version found for '{model_name}'")
+
 
 try:
     prod_version = get_production_model_version(MODEL_NAME)
@@ -45,6 +47,7 @@ except Exception as e:
 
 # Supabase setup
 supabase: Client = create_client(supabase_config["url"], supabase_config["key"])
+
 
 def log_to_supabase(data: dict, prediction: float):
     """
@@ -62,7 +65,7 @@ def log_to_supabase(data: dict, prediction: float):
         "TimeSunRise": data.get("TimeSunRise"),
         "TimeSunSet": data.get("TimeSunSet"),
         "datetime": data.get("datetime"),
-        "Radiation": prediction
+        "Radiation": prediction,
     }
     response = supabase.table("model_logs").insert(record).execute()
     if not response.data:
@@ -70,31 +73,33 @@ def log_to_supabase(data: dict, prediction: float):
     else:
         print("Insert succeeded:", response.data)
 
+
 @app.get("/")
 async def root():
     """
     Health check endpoint for the API.
     """
-    return {"message": "ML Model API is running"} 
+    return {"message": "ML Model API is running"}
+
 
 @app.post("/predict")
-async def predict_json(
-    data: Union[RawInputData, List[RawInputData]] = Body(...)
-):
+async def predict_json(data: Union[RawInputData, List[RawInputData]] = Body(...)):
     """
     Predict endpoint for JSON input. Accepts a single or list of RawInputData objects.
     Returns predictions for each input.
     """
     try:
         if isinstance(data, RawInputData):
-            data_list = [data.model_dump()]   # Pydantic v2
+            data_list = [data.model_dump()]  # Pydantic v2
         else:
             data_list = [item.model_dump() for item in data]
 
         df_raw = pd.DataFrame(data_list)
         df_preprocessed = load_and_prepare_data(df=df_raw)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid JSON data or preprocessing failed: {e}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid JSON data or preprocessing failed: {e}"
+        )
 
     preds = model.predict(df_preprocessed)
 
@@ -103,6 +108,7 @@ async def predict_json(
         log_to_supabase(input_dict, float(pred))
 
     return {"predictions": preds.tolist()}
+
 
 @app.post("/predict_csv")
 async def predict_csv(file: UploadFile = File(...)):
@@ -118,7 +124,9 @@ async def predict_csv(file: UploadFile = File(...)):
         validated_rows = []
         for _, row in df_raw.iterrows():
             try:
-                validated = RawInputData.model_validate(row.to_dict())  # Pydantic v2 validation
+                validated = RawInputData.model_validate(
+                    row.to_dict()
+                )  # Pydantic v2 validation
                 validated_rows.append(validated.model_dump())
             except ValidationError as ve:
                 raise HTTPException(status_code=400, detail=f"Invalid row in CSV: {ve}")

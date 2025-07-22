@@ -51,6 +51,7 @@ AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 MONITORING_PORT = int(os.getenv("MONITORING_PORT", "8080"))
 MONITORING_INTERVAL = int(os.getenv("MONITORING_INTERVAL", "300"))  # 5 minutes
 
+
 def get_mlflow_config():
     """
     Return a dictionary with MLflow configuration values.
@@ -58,8 +59,9 @@ def get_mlflow_config():
     return {
         "tracking_uri": MLFLOW_TRACKING_URI,
         "model_name": MLFLOW_MODEL_NAME,
-        "experiment_name": MLFLOW_EXPERIMENT_NAME
+        "experiment_name": MLFLOW_EXPERIMENT_NAME,
     }
+
 
 def get_s3_config():
     """
@@ -71,23 +73,19 @@ def get_s3_config():
         "processed_data_key": S3_PROCESSED_DATA_KEY,
         "access_key_id": AWS_ACCESS_KEY_ID,
         "secret_access_key": AWS_SECRET_ACCESS_KEY,
-        "region": AWS_DEFAULT_REGION
+        "region": AWS_DEFAULT_REGION,
     }
+
 
 def get_supabase_config():
     """
     Return a dictionary with Supabase URL and key for database access.
     """
-    return {
-        "url": SUPABASE_URL,
-        "key": SUPABASE_KEY
-    }
+    return {"url": SUPABASE_URL, "key": SUPABASE_KEY}
+
 
 def get_monitoring_config():
     """
     Return a dictionary with monitoring port and interval settings.
     """
-    return {
-        "port": MONITORING_PORT,
-        "interval": MONITORING_INTERVAL
-    } 
+    return {"port": MONITORING_PORT, "interval": MONITORING_INTERVAL}

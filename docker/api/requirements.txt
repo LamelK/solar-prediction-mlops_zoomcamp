@@ -5,3 +5,5 @@ uvicorn
 supabase
 boto3
 python-multipart 
+psutil==5.9.0
+scikit-learn==1.7.0

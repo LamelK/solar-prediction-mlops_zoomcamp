@@ -3,28 +3,32 @@ from mlpipeline.model_training import train_tune_models
 from mlpipeline.model_logging import log_models_to_mlflow, setup_mlflow
 from mlpipeline.evaluate_and_register import evaluate_and_register
 from prefect import flow, get_run_logger
-import os
 from config import get_s3_config, get_mlflow_config
+
 
 @flow(name="ML Pipeline")
 def main(bucket_name=None, raw_key=None, processed_key=None):
     """
-    Main pipeline flow for data preparation, model training, logging, and evaluation.
+    Main pipeline flow for data preparation,
+    model training, logging, and evaluation.
     Accepts optional S3 bucket and key overrides.
     """
     logger = get_run_logger()
-    
+
     # Retrieve configuration for S3 and MLflow
     s3_config = get_s3_config()
     mlflow_config = get_mlflow_config()
-    
+
     # Use provided parameters or fall back to configuration
     bucket = bucket_name or s3_config["bucket_name"]
     raw_key = raw_key or s3_config["raw_baseline_key"]
     processed_key = processed_key or s3_config["processed_data_key"]
-    
+
     if not bucket:
-        raise ValueError("S3 bucket name must be provided as an argument or in the S3_BUCKET_NAME environment variable.")
+        raise ValueError(
+            """S3 bucket name must be provided as
+            an argument or in the S3_BUCKET_NAME environment variable."""
+        )
 
     # Step 1: Preprocess raw data and save processed data to S3
     logger.info("Running data preparation...")
@@ -46,7 +50,10 @@ def main(bucket_name=None, raw_key=None, processed_key=None):
     # Set up MLflow tracking and experiment
     logger.info("Setting up MLflow...")
     logger.info(f"MLflow tracking URI: {mlflow_config['tracking_uri']}")
-    setup_mlflow(tracking_uri=mlflow_config['tracking_uri'], experiment_name=mlflow_config['experiment_name'])
+    setup_mlflow(
+        tracking_uri=mlflow_config["tracking_uri"],
+        experiment_name=mlflow_config["experiment_name"],
+    )
 
     # Log models to MLflow
     logger.info("Logging models to MLflow...")
@@ -58,6 +65,7 @@ def main(bucket_name=None, raw_key=None, processed_key=None):
     best_run, test_results = evaluate_and_register(logged_runs, X_test, y_test)
     logger.info(f"Best model registered: {best_run}")
     logger.info("Pipeline completed successfully.")
+
 
 if __name__ == "__main__":
     # Entry point for running the pipeline directly

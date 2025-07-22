@@ -13,11 +13,11 @@ def get_model_instance(model_name, params):
     Return an instance of the specified regression model with given parameters.
     Applies scaling for KNN models.
     """
-    if model_name == 'RandomForest':
+    if model_name == "RandomForest":
         return RandomForestRegressor(**params)
-    elif model_name == 'GradientBoosting':
+    elif model_name == "GradientBoosting":
         return GradientBoostingRegressor(**params)
-    elif model_name == 'KNN':
+    elif model_name == "KNN":
         # Always apply scaling for KNN
         knn = KNeighborsRegressor(**params)
         return make_pipeline(StandardScaler(), knn)
@@ -46,27 +46,31 @@ def train_tune_models(df):
 
     # Define hyperparameter grids for each model
     param_grids = {
-        'RandomForest': [
-            {'n_estimators': 150, 'max_depth': 5},
+        "RandomForest": [
+            {"n_estimators": 300, "max_depth": 15},
         ],
-        'GradientBoosting': [
-            {'n_estimators': 200, 'max_depth': 5, 'learning_rate': 0.05},
-            {'n_estimators': 100, 'max_depth': 2, 'learning_rate': 0.01},
+        "GradientBoosting": [
+            {"n_estimators": 200, "max_depth": 5, "learning_rate": 0.05},
         ],
-        'KNN': [
-            {'n_neighbors': 5, 'weights': 'uniform'},
-            {'n_neighbors': 3, 'weights': 'uniform'}
-        ]
+        "KNN": [
+            {"n_neighbors": 5, "weights": "uniform"},
+        ],
     }
 
     # Split features and target
-    X = df.drop('Radiation', axis=1)
-    y = df['Radiation']
+    X = df.drop("Radiation", axis=1)
+    y = df["Radiation"]
     # Split data into train, validation, and test sets
-    X_train_full, X_test, y_train_full, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
-    X_train, X_val, y_train, y_val = train_test_split(X_train_full, y_train_full, test_size=0.15 / 0.85, random_state=42)
+    X_train_full, X_test, y_train_full, y_test = train_test_split(
+        X, y, test_size=0.15, random_state=42
+    )
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train_full, y_train_full, test_size=0.15 / 0.85, random_state=42
+    )
 
-    logger.info(f"Data split: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}")
+    logger.info(
+        f"Data split: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}"
+    )
 
     all_runs = []
 
@@ -78,17 +82,21 @@ def train_tune_models(df):
 
             # Evaluate on validation set
             val_rmse, val_r2 = evaluate_model(model, X_val, y_val)
-            logger.info(f"{model_name} | Params: {params} | Val RMSE: {val_rmse:.4f}, Val R2: {val_r2:.4f}")
+            logger.info(
+                f"{model_name} | Params: {params} | Val RMSE: {val_rmse:.4f}, "
+                f"Val R2: {val_r2:.4f}"
+            )
 
-            all_runs.append({
-                'model_name': model_name,
-                'params': params,
-                'features': X.columns.tolist(),
-                'val_rmse': val_rmse,
-                'val_r2': val_r2,
-                'model': model
-            })
+            all_runs.append(
+                {
+                    "model_name": model_name,
+                    "params": params,
+                    "features": X.columns.tolist(),
+                    "val_rmse": val_rmse,
+                    "val_r2": val_r2,
+                    "model": model,
+                }
+            )
 
     logger.info("Model training and tuning completed")
     return all_runs, X_val, X_test, y_test
-
