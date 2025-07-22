@@ -28,6 +28,8 @@ if not S3_BUCKET_NAME:
 
 # S3 key for the raw baseline data
 S3_RAW_BASELINE_KEY = os.getenv("S3_RAW_BASELINE_KEY", "data/raw_baseline.csv")
+# S3 key for the new data
+S3_NEW_DATA_KEY = os.getenv("S3_NEW_DATA_KEY", "data/new_data.csv")
 # S3 key for the processed data
 S3_PROCESSED_DATA_KEY = os.getenv("S3_PROCESSED_DATA_KEY", "data/processed_data.csv")
 
@@ -71,6 +73,7 @@ def get_s3_config():
         "bucket_name": S3_BUCKET_NAME,
         "raw_baseline_key": S3_RAW_BASELINE_KEY,
         "processed_data_key": S3_PROCESSED_DATA_KEY,
+        "new_data_key": S3_NEW_DATA_KEY,
         "access_key_id": AWS_ACCESS_KEY_ID,
         "secret_access_key": AWS_SECRET_ACCESS_KEY,
         "region": AWS_DEFAULT_REGION,

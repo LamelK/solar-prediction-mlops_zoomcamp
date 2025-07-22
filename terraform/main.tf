@@ -21,13 +21,23 @@ resource "aws_security_group" "mlflow_ec2_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
+    cidr_blocks = [
+      "184.73.85.134/32",
+      "52.4.218.198/32",
+      "44.217.117.74/32",
+      "${chomp(data.http.myip.response_body)}/32"
+    ]
   }
   ingress {
     from_port   = 5000
     to_port     = 5000
     protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
+    cidr_blocks = [
+      "184.73.85.134/32",
+      "52.4.218.198/32",
+      "44.217.117.74/32",
+      "${chomp(data.http.myip.response_body)}/32"
+    ]
   }
   egress {
     from_port   = 0

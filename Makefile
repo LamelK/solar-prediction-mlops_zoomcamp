@@ -1,6 +1,6 @@
 # Makefile for code quality
 
-.PHONY: lint format check
+.PHONY: lint format check deploy-prefect
 
 lint:
 	flake8 .
@@ -12,3 +12,6 @@ format:
 check:
 	black --check .
 	ruff check . 
+
+deploy-prefect:
+	python $(CURDIR)/prefect_deployment.py

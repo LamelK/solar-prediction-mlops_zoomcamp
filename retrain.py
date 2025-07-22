@@ -27,7 +27,7 @@ def get_config():
     s3_config = get_s3_config()
     bucket = s3_config["bucket_name"]
     baseline_key = s3_config["raw_baseline_key"]
-    new_data_key = s3_config.get("new_data_key")
+    new_data_key = s3_config["new_data_key"]
     return bucket, baseline_key, new_data_key
 
 
