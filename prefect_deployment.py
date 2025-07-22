@@ -10,10 +10,7 @@ env_vars = dotenv_values(".env")
 source_repo = os.getenv("SOURCE_REPO")
 
 if __name__ == "__main__":
-    flow.from_source(
-        source=source_repo,
-        entrypoint="pipeline.py:main",
-    ).deploy(
+    flow.from_source(source=source_repo, entrypoint="pipeline.py:main",).deploy(
         name="ml-pipeline",
         work_pool_name="ml-pool",
         job_variables={
@@ -33,8 +30,7 @@ if __name__ == "__main__":
     )
     # Second deployment
     flow.from_source(
-        source=source_repo,
-        entrypoint="retrain.py:retrain_on_drift_distance_rmse",
+        source=source_repo, entrypoint="retrain.py:retrain_on_drift_distance_rmse",
     ).deploy(
         name="retrain-deployment",
         work_pool_name="ml-pool",

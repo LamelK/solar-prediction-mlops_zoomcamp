@@ -1,7 +1,0 @@
-# Common packages used across all services
-numpy==2.0.2
-pandas
-python-dotenv
-requests
-mlflow
-prefect 

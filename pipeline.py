@@ -4,9 +4,6 @@ from mlpipeline.model_logging import log_models_to_mlflow, setup_mlflow
 from mlpipeline.evaluate_and_register import evaluate_and_register
 from prefect import flow, get_run_logger
 from config import get_s3_config, get_mlflow_config
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 @flow(name="ML Pipeline")

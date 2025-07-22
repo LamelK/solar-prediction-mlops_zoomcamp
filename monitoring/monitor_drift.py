@@ -1,24 +1,33 @@
-import json
-import time
 import os
 import sys
-import boto3
-from sklearn.metrics import mean_squared_error
-import io
+from dotenv import load_dotenv
+from datetime import datetime
+import json
+import time
 import random
+import io
+
+import boto3
 import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_squared_error
 from prometheus_client import start_http_server, Gauge
 from supabase import create_client, Client
 from evidently.report import Report
 from evidently.metric_preset import DataDriftPreset
-from dotenv import load_dotenv
-from mlpipeline.data_preparation import load_data_s3
 from scipy.stats import ks_2samp, anderson_ksamp
-from config import get_supabase_config, get_s3_config, get_monitoring_config
-from datetime import datetime
+from io import StringIO
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+)  # noqa: E402
+
+from config import (  # noqa: E402
+    get_supabase_config,
+    get_s3_config,
+    get_monitoring_config,
+)  # noqa: E402
+
 
 load_dotenv()
 
@@ -26,6 +35,28 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 np.random.seed(42)
 random.seed(42)
+
+
+# load baseline data from s3 function
+def load_data_s3(bucket_name, file_key, aws_profile=None):
+    """
+    Loads a CSV file from S3 into a pandas DataFrame.
+    Optionally uses a specific AWS profile.
+    """
+    session = (
+        boto3.Session(profile_name=aws_profile) if aws_profile else boto3.Session()
+    )
+    s3 = session.client("s3")
+
+    obj = s3.get_object(Bucket=bucket_name, Key=file_key)
+    df = pd.read_csv(StringIO(obj["Body"].read().decode("utf-8")))
+
+    print(
+        f"Loaded data from S3 bucket: {bucket_name}, "
+        f"key: {file_key} => {df.shape[0]} rows, {df.shape[1]} columns"
+    )
+    return df
+
 
 # Get configuration
 supabase_config = get_supabase_config()
@@ -44,7 +75,6 @@ baseline = load_data_s3(S3_BUCKET_NAME, RAW_KEY)
 
 # Helper to upload file to S3
 def upload_file_to_s3(local_path, bucket, s3_key):
-    import boto3
 
     s3 = boto3.client("s3")
     with open(local_path, "rb") as f:
@@ -256,11 +286,13 @@ def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
         recent_scaled = scaler.transform(recent_clean.values.reshape(-1, 1)).flatten()
 
         # Calculate statistics on scaled data
-        baseline_mean_scaled, baseline_std_scaled = np.mean(baseline_scaled), np.std(
-            baseline_scaled
+        baseline_mean_scaled, baseline_std_scaled = (
+            np.mean(baseline_scaled),
+            np.std(baseline_scaled),
         )
-        recent_mean_scaled, recent_std_scaled = np.mean(recent_scaled), np.std(
-            recent_scaled
+        recent_mean_scaled, recent_std_scaled = (
+            np.mean(recent_scaled),
+            np.std(recent_scaled),
         )
 
         # Calculate absolute changes on scaled data (fair comparison across features)
@@ -270,8 +302,9 @@ def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
         std_change = abs(recent_std_scaled - baseline_std_scaled)
 
         # Also keep original unscaled values for reference
-        baseline_mean_orig, baseline_std_orig = np.mean(baseline_clean), np.std(
-            baseline_clean
+        baseline_mean_orig, baseline_std_orig = (
+            np.mean(baseline_clean),
+            np.std(baseline_clean),
         )
         recent_mean_orig, recent_std_orig = np.mean(recent_clean), np.std(recent_clean)
 
@@ -651,10 +684,10 @@ def compute_rmse_with_ground_truth(recent):
 if __name__ == "__main__":
     start_http_server(8080)
     print("Prometheus metrics available on port 8080")
-    print("Starting hourly drift monitoring...")
+    print("Starting drift monitoring...")
     while True:
         drift_share, enhanced_share, recent = update_metrics()
         print(f"Drift Share: {drift_share:.2f}, Enhanced Share: {enhanced_share:.2f}")
         compute_rmse_with_ground_truth(recent)
-        print(f"Next check in {MONITORING_INTERVAL/3600:.1f} hours...")
+        print(f"Next check in {MONITORING_INTERVAL/300:.1f} minutes...")
         time.sleep(MONITORING_INTERVAL)

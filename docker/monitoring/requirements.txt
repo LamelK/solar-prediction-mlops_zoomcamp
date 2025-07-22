@@ -2,3 +2,11 @@
 # Common packages are in base image
 evidently==0.6.7
 prometheus-client 
+boto3
+supabase
+numpy
+pandas
+python-dotenv
+requests
+mlflow
+scikit-learn==1.7.0

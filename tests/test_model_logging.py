@@ -14,16 +14,19 @@ def dummy_all_runs():
     y_dummy = np.random.rand(10)
     model.fit(X_dummy, y_dummy)
 
-    return [
-        {
-            "model_name": "RandomForest",
-            "params": {"n_estimators": 10},
-            "features": ["A", "B", "C"],
-            "val_rmse": 0.5,
-            "val_r2": 0.8,
-            "model": model,
-        }
-    ], X_dummy
+    return (
+        [
+            {
+                "model_name": "RandomForest",
+                "params": {"n_estimators": 10},
+                "features": ["A", "B", "C"],
+                "val_rmse": 0.5,
+                "val_r2": 0.8,
+                "model": model,
+            }
+        ],
+        X_dummy,
+    )
 
 
 @patch("mlpipeline.model_logging.get_run_logger")

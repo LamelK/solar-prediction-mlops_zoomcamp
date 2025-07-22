@@ -46,15 +46,11 @@ def train_tune_models(df):
 
     # Define hyperparameter grids for each model
     param_grids = {
-        "RandomForest": [
-            {"n_estimators": 300, "max_depth": 15},
-        ],
+        "RandomForest": [{"n_estimators": 300, "max_depth": 15}, ],
         "GradientBoosting": [
             {"n_estimators": 200, "max_depth": 5, "learning_rate": 0.05},
         ],
-        "KNN": [
-            {"n_neighbors": 5, "weights": "uniform"},
-        ],
+        "KNN": [{"n_neighbors": 5, "weights": "uniform"}, ],
     }
 
     # Split features and target

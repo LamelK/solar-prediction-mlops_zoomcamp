@@ -1,24 +1,21 @@
-# Multi-stage build for Monitoring
-FROM solar-base:latest as base
-
-# Build stage
-FROM base as builder
+# Dockerfile for Monitoring Service (no shared base)
+FROM python:3.11-slim as production
 WORKDIR /app
 
-# Copy service-specific requirements
-COPY docker/monitoring/requirements.txt .
+# Install system dependencies
+RUN apt-get update && apt-get install -y gcc curl procps && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY docker/monitoring/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Production stage
-FROM base as production
-WORKDIR /app
-
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Copy application code
 COPY monitoring/ ./monitoring/
+COPY mlpipeline/ ./mlpipeline/
 COPY config.py .
+
+# Set PYTHONPATH so config.py is importable
+ENV PYTHONPATH=/app
 
 # Copy startup script
 COPY docker/start_monitoring_container.sh /app/start_monitoring_container.sh

@@ -52,6 +52,7 @@ AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 # Monitoring configuration
 MONITORING_PORT = int(os.getenv("MONITORING_PORT", "8080"))
 MONITORING_INTERVAL = int(os.getenv("MONITORING_INTERVAL", "300"))  # 5 minutes
+DISTANCE_FEATURE_THRESHOLD = float(os.getenv("DISTANCE_FEATURE_THRESHOLD", "0.3"))
 
 
 def get_mlflow_config():
@@ -91,4 +92,8 @@ def get_monitoring_config():
     """
     Return a dictionary with monitoring port and interval settings.
     """
-    return {"port": MONITORING_PORT, "interval": MONITORING_INTERVAL}
+    return {
+        "port": MONITORING_PORT,
+        "interval": MONITORING_INTERVAL,
+        "distance_feature_threshold": DISTANCE_FEATURE_THRESHOLD,
+    }
