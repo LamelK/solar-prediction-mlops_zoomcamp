@@ -45,13 +45,14 @@ jobs:
       - name: Create .env.deploy file for deployment
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          echo "SOURCE_REPO=https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git" > .env.deploy
+          echo "SOURCE_REPO=https://github.com/${{ github.repository }}.git" > .env.deploy
           echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env.deploy
 
       - name: Deploy Prefect Flows
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           GIT_COMMIT_HASH: ${{ github.sha }}
+          SOURCE_REPO: https://github.com/${{ github.repository }}.git
         run: |
           cp .env.deploy .env
           python prefect_deployment.py
