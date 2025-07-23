@@ -24,7 +24,8 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest pytest-cov python-dotenv
 
-      - name: Create .env file with dummy variables
+      - name: Create .env file with dummy variables (for tests only)
+        if: github.ref != 'refs/heads/main' || github.event_name != 'push'
         run: |
           echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env
           echo "S3_BUCKET_NAME=dummy-bucket" >> .env
@@ -37,16 +38,12 @@ jobs:
       - name: Lint and Test
         run: bash run_tests.sh
 
-      - name: Create .env file for deployment
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env
-          echo "SOURCE_REPO=https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git" >> .env
-
       - name: Login to Prefect Cloud
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: prefect cloud login --key ${{ secrets.PREFECT_KEY }} --workspace "lamel-mo/default" 
 
       - name: Deploy Prefect Flows
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          GIT_COMMIT_HASH: ${{ github.sha }}
         run: python prefect_deployment.py 
