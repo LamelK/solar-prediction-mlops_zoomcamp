@@ -1,4 +1,5 @@
 import pytest
+pytestmark = pytest.mark.integration
 from unittest.mock import patch, MagicMock
 import pandas as pd
 import numpy as np
