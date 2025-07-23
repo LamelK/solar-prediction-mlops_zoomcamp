@@ -1,4 +1,5 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body
+import os
+from fastapi import FastAPI, UploadFile, File, HTTPException, Body, Depends
 import pandas as pd
 import mlflow.pyfunc
 from mlflow.tracking import MlflowClient
@@ -9,6 +10,7 @@ from api.schemas import RawInputData
 from dotenv import load_dotenv
 from config import get_mlflow_config, get_s3_config, get_supabase_config
 from pydantic import ValidationError
+from functools import lru_cache
 
 load_dotenv()
 
@@ -16,6 +18,7 @@ load_dotenv()
 mlflow_config = get_mlflow_config()
 s3_config = get_s3_config()
 supabase_config = get_supabase_config()
+RELOAD_SECRET = os.getenv("RELOAD_SECRET", "default_secret")
 
 mlflow.set_tracking_uri(mlflow_config["tracking_uri"])
 
@@ -27,7 +30,7 @@ MODEL_NAME = mlflow_config["model_name"]
 def get_production_model_version(model_name):
     """
     Retrieve the version number of the current production model
-    from MLflow Model Registry.Raises an error if no production
+    from MLflow Model Registry. Raises an error if no production
     version is found.
     """
     client = MlflowClient()
@@ -38,18 +41,24 @@ def get_production_model_version(model_name):
     raise RuntimeError(f"No production model version found for '{model_name}'")
 
 
-try:
+@lru_cache()
+def get_model():
+    """
+    Loads the production model from MLflow Model Registry.
+    """
     prod_version = get_production_model_version(MODEL_NAME)
     model_uri = f"models:/{MODEL_NAME}/{prod_version}"
-    model = mlflow.pyfunc.load_model(model_uri)
-except Exception as e:
-    raise RuntimeError(f"Failed to load production model: {e}")
-
-# Supabase setup
-supabase: Client = create_client(supabase_config["url"], supabase_config["key"])
+    return mlflow.pyfunc.load_model(model_uri)
 
 
-def log_to_supabase(data: dict, prediction: float):
+def get_supabase():
+    """
+    Creates and returns a Supabase client.
+    """
+    return create_client(supabase_config["url"], supabase_config["key"])
+
+
+def log_to_supabase(supabase: Client, data: dict, prediction: float):
     """
     Log input data and prediction to the Supabase table 'model_logs'.
     """
@@ -83,7 +92,11 @@ async def root():
 
 
 @app.post("/predict")
-async def predict_json(data: Union[RawInputData, List[RawInputData]] = Body(...)):
+async def predict_json(
+    data: Union[RawInputData, List[RawInputData]] = Body(...),
+    model=Depends(get_model),
+    supabase=Depends(get_supabase),
+):
     """
     Predict endpoint for JSON input. Accepts a single or list of RawInputData objects.
     Returns predictions for each input.
@@ -105,13 +118,17 @@ async def predict_json(data: Union[RawInputData, List[RawInputData]] = Body(...)
 
     # Log each prediction to Supabase
     for input_dict, pred in zip(data_list, preds):
-        log_to_supabase(input_dict, float(pred))
+        log_to_supabase(supabase, input_dict, float(pred))
 
     return {"predictions": preds.tolist()}
 
 
 @app.post("/predict_csv")
-async def predict_csv(file: UploadFile = File(...)):
+async def predict_csv(
+    file: UploadFile = File(...),
+    model=Depends(get_model),
+    supabase=Depends(get_supabase),
+):
     """
     Predict endpoint for CSV file upload. Validates each row and returns predictions.
     """
@@ -124,9 +141,7 @@ async def predict_csv(file: UploadFile = File(...)):
         validated_rows = []
         for _, row in df_raw.iterrows():
             try:
-                validated = RawInputData.model_validate(
-                    row.to_dict()
-                )  # Pydantic v2 validation
+                validated = RawInputData.model_validate(row.to_dict())
                 validated_rows.append(validated.model_dump())
             except ValidationError as ve:
                 raise HTTPException(status_code=400, detail=f"Invalid row in CSV: {ve}")
@@ -142,6 +157,19 @@ async def predict_csv(file: UploadFile = File(...)):
 
     # Log each prediction to Supabase
     for idx, row in enumerate(validated_rows):
-        log_to_supabase(row, float(preds[idx]))
+        log_to_supabase(supabase, row, float(preds[idx]))
 
     return {"predictions": preds.tolist()}
+
+
+@app.post("/reload-model")
+async def reload_model(secret: str = ""):
+    """
+    Endpoint to clear the model cache and reload the latest model from MLflow.
+    Protect this endpoint with a secret or authentication.
+    """
+    # Optional: Protect with a secret or authentication
+    if secret != RELOAD_SECRET:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    get_model.cache_clear()
+    return {"detail": "Model cache cleared. Next request will reload the model."}

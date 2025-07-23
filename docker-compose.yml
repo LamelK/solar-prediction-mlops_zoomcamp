@@ -50,6 +50,7 @@ services:
       - MONITORING_INTERVAL=${MONITORING_INTERVAL}
       - MONITORING_PORT=${MONITORING_PORT}
       - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - RELOAD_SECRET=${RELOAD_SECRET}
     networks:
       - solar-network
     restart: unless-stopped

@@ -120,10 +120,6 @@ def retrain_on_drift_distance_rmse():
         main(bucket_name=bucket, raw_key=baseline_key)
         logger.info("Retraining completed with baseline only.")
 
-    reload_api_url = "http://localhost:8000/reload_model"
-    logger.info(f"Triggering model reload via {reload_api_url}")
-    trigger_model_reload(reload_api_url)
-
 
 if __name__ == "__main__":
     # Entry point for running the retraining flow directly
