@@ -42,7 +42,10 @@ jobs:
         run: |
           echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env
           echo "SOURCE_REPO=https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git" >> .env
-          # Add other real secrets here for deployment if needed
+
+      - name: Login to Prefect Cloud
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: prefect cloud login --key ${{ secrets.PREFECT_KEY }} --workspace "lamel-mo/default" 
 
       - name: Deploy Prefect Flows
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
