@@ -1,12 +1,13 @@
 import pytest
-from fastapi.testclient import TestClient
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import pandas as pd
 import numpy as np
 
-from api.serve_model import app  # Adjust if your app module path is different
-
-client = TestClient(app)
+with patch("api.serve_model.mlflow.pyfunc.load_model", return_value=MagicMock()), \
+     patch("api.serve_model.create_client", return_value=MagicMock()):
+    from api.serve_model import app
+    from fastapi.testclient import TestClient
+    client = TestClient(app)
 
 
 @pytest.fixture
@@ -92,3 +93,8 @@ def test_predict_json_invalid_data():
     response = client.post("/predict", json=invalid_data)
     assert response.status_code == 422
     assert "detail" in response.text
+
+
+@pytest.fixture(scope="session")
+def test_client():
+    return client

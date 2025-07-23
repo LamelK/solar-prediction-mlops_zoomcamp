@@ -1,6 +1,6 @@
 # Makefile for code quality
 
-.PHONY: lint format check deploy-prefect api-shell monitoring-shell api-debug monitoring-debug api-up monitoring-up
+.PHONY: lint format check deploy-prefect api-shell monitoring-shell api-debug monitoring-debug api-up monitoring-up test
 
 lint:
 	flake8 .
@@ -33,3 +33,7 @@ api-up:
 
 monitoring-up:
 	docker compose up monitoring
+
+test:
+	flake8 .
+	pytest --cov=.

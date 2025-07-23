@@ -5,12 +5,15 @@ from mlpipeline.data_preparation import (
     load_and_prepare_data,
 )  # adjust import to your actual module name
 
-# data
-SAMPLE_CSV = """UNIXTime,Data,Time,Radiation,Temperature,
-Pressure,Humidity,WindDirection_Degrees,Speed,TimeSunRise,TimeSunSet
-1472793006,9/1/2016 12:00:00 AM,19:10:06,2.53,55,30.45,65,155.71,3.37,06:07:00,18:38:00
-1472781308,9/1/2016 12:00:00 AM,15:55:08,628.8,63,30.42,58,1.55,6.75,06:07:00,18:38:00
-"""
+
+SAMPLE_CSV = (
+    "UNIXTime,Data,Time,Radiation,Temperature,Pressure,Humidity,"
+    "WindDirection_Degrees,Speed,TimeSunRise,TimeSunSet\n"
+    "1472793006,9/1/2016 12:00:00 AM,19:10:06,2.53,55,30.45,65,"
+    "155.71,3.37,06:07:00,18:38:00\n"
+    "1472781308,9/1/2016 12:00:00 AM,15:55:08,628.8,63,30.42,58,"
+    "1.55,6.75,06:07:00,18:38:00\n"
+)
 
 
 @pytest.fixture

@@ -40,8 +40,8 @@ def test_retrain_flow(
     retrain_flow_with_mocked_config()
 
     assert (
-        mock_load_data.call_count == 1
-    )  # because new data empty, only baseline loaded
+        mock_load_data.call_count == 2
+    )  # baseline and new data loaded
     mock_save_df.assert_not_called()  # no merge, so no save
     mock_main.assert_called_once()  # retrain called once
     mock_archive.assert_not_called()  # no archive since no new data
