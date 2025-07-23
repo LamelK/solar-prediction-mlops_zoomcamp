@@ -10,7 +10,7 @@ load_dotenv()
 
 
 @task(name="Setup MLflow")
-def setup_mlflow(tracking_uri=None, experiment_name="My_Model_Experiment"):
+def setup_mlflow(tracking_uri=None, experiment_name=None):
     """
     Configures MLflow tracking URI and experiment name.
     Uses environment variable if tracking_uri is not provided.
