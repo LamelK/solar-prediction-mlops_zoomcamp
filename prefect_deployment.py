@@ -1,10 +1,7 @@
 import os
-from dotenv import load_dotenv, dotenv_values
 from prefect import flow
 from prefect.runner.storage import GitRepository
 
-load_dotenv()
-env_vars = dotenv_values(".env")
 
 # REPO_URL = os.getenv("SOURCE_REPO")
 # if REPO_URL is None:
@@ -52,8 +49,7 @@ if __name__ == "__main__":
                 "scipy",
                 "boto3",
                 "requests",
-            ],
-            "env": env_vars,
+            ]
         },
     )
 
@@ -72,7 +68,6 @@ if __name__ == "__main__":
                 "scikit-learn",
                 "boto3",
                 "requests",
-            ],
-            "env": env_vars,
+            ]
         },
     )
