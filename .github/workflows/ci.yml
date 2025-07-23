@@ -41,6 +41,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env
+          echo "SOURCE_REPO=https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git" >> .env
           # Add other real secrets here for deployment if needed
 
       - name: Deploy Prefect Flows
