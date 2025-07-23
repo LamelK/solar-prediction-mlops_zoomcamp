@@ -1,16 +1,24 @@
 import pytest
-pytestmark = pytest.mark.integration
 from unittest.mock import patch, MagicMock
 import pandas as pd
 import numpy as np
+from api.serve_model import app
+from fastapi.testclient import TestClient
 
-with patch("api.serve_model.mlflow.pyfunc.load_model", return_value=MagicMock()), patch(
-    "api.serve_model.create_client", return_value=MagicMock()
-):
-    from api.serve_model import app
-    from fastapi.testclient import TestClient
 
-    client = TestClient(app)
+@pytest.fixture(scope="session")
+def client():
+    return TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def patch_mlflow_and_client(monkeypatch):
+    with patch("api.serve_model.mlflow.pyfunc.load_model", return_value=MagicMock()), \
+         patch("api.serve_model.create_client", return_value=MagicMock()):
+        yield
+
+
+pytestmark = pytest.mark.integration
 
 
 @pytest.mark.integration
@@ -36,7 +44,7 @@ def sample_json_input():
 @patch("api.serve_model.log_to_supabase")
 @pytest.mark.integration
 def test_predict_json(
-    mock_log_supabase, mock_preprocess, mock_model, sample_json_input
+    mock_log_supabase, mock_preprocess, mock_model, sample_json_input, client
 ):
     mock_preprocess.return_value = pd.DataFrame(np.random.rand(1, 3))
     mock_model.predict.return_value = np.array([123.45])
@@ -59,7 +67,7 @@ def test_predict_json(
 @patch("api.serve_model.log_to_supabase")
 @pytest.mark.integration
 def test_predict_csv(
-    mock_log_supabase, mock_preprocess, mock_model, tmp_path, sample_json_input
+    mock_log_supabase, mock_preprocess, mock_model, tmp_path, sample_json_input, client
 ):
     # Create a dummy CSV file
     df = pd.DataFrame([sample_json_input])
@@ -86,7 +94,7 @@ def test_predict_csv(
     mock_log_supabase.assert_called_once()
 
 
-def test_predict_csv_invalid_file_type():
+def test_predict_csv_invalid_file_type(client):
     response = client.post(
         "/predict_csv", files={"file": ("test.txt", b"not,a,csv", "text/plain")}
     )
@@ -94,13 +102,8 @@ def test_predict_csv_invalid_file_type():
     assert "Only CSV files are supported." in response.json()["detail"]
 
 
-def test_predict_json_invalid_data():
+def test_predict_json_invalid_data(client):
     invalid_data = {"invalid": "data"}
     response = client.post("/predict", json=invalid_data)
     assert response.status_code == 422
     assert "detail" in response.text
-
-
-@pytest.fixture(scope="session")
-def test_client():
-    return client
