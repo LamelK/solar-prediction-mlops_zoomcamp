@@ -25,7 +25,6 @@ jobs:
           pip install flake8 pytest pytest-cov python-dotenv
 
       - name: Create .env file with dummy variables (for tests only)
-        if: github.ref != 'refs/heads/main' || github.event_name != 'push'
         run: |
           echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env
           echo "S3_BUCKET_NAME=dummy-bucket" >> .env
