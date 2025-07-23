@@ -33,6 +33,9 @@ jobs:
           echo "SOURCE_REPO=https://github.com/dummy/repo.git" >> .env
           echo "GIT_COMMIT_HASH=dummyhash" >> .env
 
+      - name: List collected tests
+        run: pytest --collect-only -m "not integration" -v
+
       - name: Lint and Test
         run: bash run_tests.sh
 
