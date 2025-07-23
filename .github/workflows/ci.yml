@@ -24,6 +24,15 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest pytest-cov python-dotenv
 
+      - name: Create .env file with dummy variables
+        run: |
+          echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env
+          echo "S3_BUCKET_NAME=dummy-bucket" >> .env
+          echo "SUPABASE_URL=https://dummy.supabase.co" >> .env
+          echo "SUPABASE_KEY=dummy-key" >> .env
+          echo "SOURCE_REPO=https://github.com/dummy/repo.git" >> .env
+          echo "GIT_COMMIT_HASH=dummyhash" >> .env
+
       - name: Lint and Test
         run: bash run_tests.sh
 
