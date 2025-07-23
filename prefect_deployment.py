@@ -6,14 +6,15 @@ from prefect.runner.storage import GitRepository
 load_dotenv()
 env_vars = dotenv_values(".env")
 
-REPO_URL = os.getenv("SOURCE_REPO")
-if REPO_URL is None:
-    REPO_URL = env_vars.get("SOURCE_REPO")
-if isinstance(REPO_URL, bytes):
-    REPO_URL = REPO_URL.decode("utf-8")
-elif not isinstance(REPO_URL, str):
-    REPO_URL = str(REPO_URL)
-print("REPO_URL:", REPO_URL, type(REPO_URL))
+# REPO_URL = os.getenv("SOURCE_REPO")
+# if REPO_URL is None:
+#     REPO_URL = env_vars.get("SOURCE_REPO")
+# if isinstance(REPO_URL, bytes):
+#     REPO_URL = REPO_URL.decode("utf-8")
+# elif not isinstance(REPO_URL, str):
+#     REPO_URL = str(REPO_URL)
+# print("REPO_URL:", REPO_URL, type(REPO_URL))
+REPO_URL = "https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git"
 
 COMMIT_HASH = os.getenv("GIT_COMMIT_HASH")
 
