@@ -24,31 +24,34 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest pytest-cov python-dotenv
 
-      # - name: Create .env file with dummy variables (for all tests)
-      #   run: |
-      #     # echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env
-      #     # echo "S3_BUCKET_NAME=dummy-bucket" >> .env
-      #     # echo "SUPABASE_URL=https://dummy.supabase.co" >> .env
-      #     # echo "SUPABASE_KEY=dummy-key" >> .env
-
-      - name: List collected tests
-        run: pytest --collect-only -m "not integration" -v
+      - name: Create .env.test file for tests
+        run: |
+          echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env.test
+          echo "S3_BUCKET_NAME=dummy-bucket" >> .env.test
+          echo "SUPABASE_URL=https://dummy.supabase.co" >> .env.test
+          echo "SUPABASE_KEY=dummy-key" >> .env.test
 
       - name: Lint and Test
-        run: bash run_tests.sh
+        env:
+          ENV_FILE: .env.test
+        run: |
+          cp $ENV_FILE .env
+          bash run_tests.sh
 
       - name: Login to Prefect Cloud
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: prefect cloud login --key ${{ secrets.PREFECT_KEY }} --workspace "lamel-mo/default" 
+        run: prefect cloud login --key ${{ secrets.PREFECT_KEY }} --workspace "lamel-mo/default"
 
-      - name: Overwrite .env with secrets for deployment
+      - name: Create .env.deploy file for deployment
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          echo "SOURCE_REPO=https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git" >> .env
-          echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env 
+          echo "SOURCE_REPO=https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git" > .env.deploy
+          echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env.deploy
 
       - name: Deploy Prefect Flows
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           GIT_COMMIT_HASH: ${{ github.sha }}
-        run: python prefect_deployment.py 
+        run: |
+          cp .env.deploy .env
+          python prefect_deployment.py
