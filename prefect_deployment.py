@@ -7,6 +7,11 @@ load_dotenv()
 env_vars = dotenv_values(".env")
 
 REPO_URL = os.getenv("SOURCE_REPO")
+if REPO_URL is None:
+    REPO_URL = env_vars.get("SOURCE_REPO")
+if isinstance(REPO_URL, bytes):
+    REPO_URL = REPO_URL.decode()
+
 COMMIT_HASH = os.getenv("GIT_COMMIT_HASH")
 
 
