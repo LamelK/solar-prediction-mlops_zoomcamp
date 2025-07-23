@@ -39,7 +39,7 @@ jobs:
 
       - name: Login to Prefect Cloud
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: prefect cloud login --key ${{ secrets.PREFECT_KEY }} --workspace "lamel-mo/default" 
+        run: prefect cloud login --key ${{ secrets.PREFECT_API_KEY }} --workspace "lamel-mo/default" 
 
       - name: Overwrite .env with secrets for deployment
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
