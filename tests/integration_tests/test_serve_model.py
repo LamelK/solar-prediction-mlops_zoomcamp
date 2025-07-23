@@ -1,9 +1,12 @@
 import pytest
-from unittest.mock import patch, MagicMock
-import pandas as pd
-import numpy as np
-from api.serve_model import app
-from fastapi.testclient import TestClient
+
+pytestmark = pytest.mark.integration  # noqa: F811
+
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from unittest.mock import MagicMock, patch  # noqa: E402
+from api.serve_model import app  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -13,12 +16,10 @@ def client():
 
 @pytest.fixture(autouse=True)
 def patch_mlflow_and_client(monkeypatch):
-    with patch("api.serve_model.mlflow.pyfunc.load_model", return_value=MagicMock()), \
-         patch("api.serve_model.create_client", return_value=MagicMock()):
+    with patch(
+        "api.serve_model.mlflow.pyfunc.load_model", return_value=MagicMock()
+    ), patch("api.serve_model.create_client", return_value=MagicMock()):
         yield
-
-
-pytestmark = pytest.mark.integration
 
 
 @pytest.mark.integration
