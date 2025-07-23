@@ -30,8 +30,6 @@ jobs:
           echo "S3_BUCKET_NAME=dummy-bucket" >> .env
           echo "SUPABASE_URL=https://dummy.supabase.co" >> .env
           echo "SUPABASE_KEY=dummy-key" >> .env
-          echo "SOURCE_REPO=https://github.com/dummy/repo.git" >> .env
-          echo "GIT_COMMIT_HASH=dummyhash" >> .env
 
       - name: List collected tests
         run: pytest --collect-only -m "not integration" -v
@@ -39,6 +37,12 @@ jobs:
       - name: Lint and Test
         run: bash run_tests.sh
 
+      - name: Create .env file for deployment
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env
+          # Add other real secrets here for deployment if needed
+
       - name: Deploy Prefect Flows
-        if: ${{ success() }}
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: python prefect_deployment.py 

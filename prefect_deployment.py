@@ -7,6 +7,7 @@ load_dotenv()
 env_vars = dotenv_values(".env")
 
 REPO_URL = os.getenv("SOURCE_REPO")
+COMMIT_HASH = os.getenv("GIT_COMMIT_HASH")
 
 
 @flow(log_prints=True)
@@ -21,7 +22,9 @@ def retrain_on_drift_distance_rmse():
 
 if __name__ == "__main__":
 
-    source = GitRepository(url=REPO_URL, branch="main")
+    source = GitRepository(
+        url=REPO_URL,
+        commit_sha=COMMIT_HASH)
 
     main.from_source(
         source=source,
