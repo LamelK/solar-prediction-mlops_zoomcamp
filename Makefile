@@ -37,3 +37,7 @@ monitoring-up:
 test:
 	flake8 .
 	pytest --cov=.
+
+test-unit:
+	flake8 .
+	pytest --cov=. -m "not integration"

@@ -3,7 +3,6 @@ from unittest.mock import patch, MagicMock
 import importlib
 
 
-@pytest.mark.integration
 @pytest.fixture
 def retrain_flow_with_mocked_config():
     with patch("retrain.get_s3_config") as mock_s3_config:
@@ -23,6 +22,7 @@ def retrain_flow_with_mocked_config():
 @patch("retrain.save_df_to_s3")
 @patch("retrain.load_data_s3")
 @patch("retrain.archive_new_data_s3")
+@pytest.mark.integration
 def test_retrain_flow(
     mock_archive,
     mock_load_data,

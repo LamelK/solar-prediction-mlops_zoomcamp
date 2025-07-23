@@ -2,8 +2,6 @@ from unittest.mock import patch, MagicMock
 from pipeline import main
 import pytest
 
-
-@pytest.mark.integration
 @patch("pipeline.get_s3_config")
 @patch("pipeline.get_mlflow_config")
 @patch("pipeline.load_and_prepare_data")
@@ -12,6 +10,7 @@ import pytest
 @patch("pipeline.setup_mlflow")
 @patch("pipeline.log_models_to_mlflow")
 @patch("pipeline.evaluate_and_register")
+@pytest.mark.integration
 def test_main_flow(
     mock_evaluate_register,
     mock_log_models,
