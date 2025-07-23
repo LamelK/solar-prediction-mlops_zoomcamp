@@ -24,35 +24,41 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest pytest-cov python-dotenv
 
-      - name: Create .env.test file for tests
+      - name: Create .env file with dummy variables (for all tests)
         run: |
-          echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env.test
-          echo "S3_BUCKET_NAME=dummy-bucket" >> .env.test
-          echo "SUPABASE_URL=https://dummy.supabase.co" >> .env.test
-          echo "SUPABASE_KEY=dummy-key" >> .env.test
+          echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env
+          echo "S3_BUCKET_NAME=dummy-bucket" >> .env
+          echo "SUPABASE_URL=https://dummy.supabase.co" >> .env
+          echo "SUPABASE_KEY=dummy-key" >> .env
+
+      - name: List collected tests
+        run: pytest --collect-only -m "not integration" -v
 
       - name: Lint and Test
-        env:
-          ENV_FILE: .env.test
-        run: |
-          cp $ENV_FILE .env
-          bash run_tests.sh
+        run: bash run_tests.sh
 
       - name: Login to Prefect Cloud
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: prefect cloud login --key ${{ secrets.PREFECT_KEY }} --workspace "lamel-mo/default"
+        run: prefect cloud login --key ${{ secrets.PREFECT_KEY }} --workspace "lamel-mo/default" 
 
-      - name: Create .env.deploy file for deployment
+      - name: Overwrite .env with secrets for deployment
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          echo "SOURCE_REPO=https://github.com/${{ github.repository }}.git" > .env.deploy
-          echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env.deploy
+          echo "MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}" > .env
+          echo "S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> .env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+          echo "AWS_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> .env
+          echo "S3_RAW_BASELINE_KEY=${{ secrets.S3_RAW_BASELINE_KEY }}" >> .env
+          echo "S3_NEW_DATA_KEY=${{ secrets.S3_NEW_DATA_KEY }}" >> .env
+          echo "S3_PROCESSED_DATA_KEY=${{ secrets.S3_PROCESSED_DATA_KEY }}" >> .env
+          echo "SOURCE_REPO=https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git" >> .env
+          echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env 
 
       - name: Deploy Prefect Flows
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           GIT_COMMIT_HASH: ${{ github.sha }}
-          SOURCE_REPO: https://github.com/${{ github.repository }}.git
-        run: |
-          cp .env.deploy .env
-          python prefect_deployment.py
+        run: python prefect_deployment.py 
