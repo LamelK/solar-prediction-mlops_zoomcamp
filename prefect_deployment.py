@@ -1,7 +1,10 @@
 import os
+from dotenv import load_dotenv, dotenv_values
 from prefect import flow
 from prefect.runner.storage import GitRepository
 
+load_dotenv()
+env_vars = dotenv_values(".env")
 
 # REPO_URL = os.getenv("SOURCE_REPO")
 # if REPO_URL is None:
@@ -11,6 +14,7 @@ from prefect.runner.storage import GitRepository
 # elif not isinstance(REPO_URL, str):
 #     REPO_URL = str(REPO_URL)
 # print("REPO_URL:", REPO_URL, type(REPO_URL))
+
 REPO_URL = "https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git"
 
 COMMIT_HASH = os.getenv("GIT_COMMIT_HASH")
@@ -49,7 +53,8 @@ if __name__ == "__main__":
                 "scipy",
                 "boto3",
                 "requests",
-            ]
+            ],
+            "env": env_vars,
         },
     )
 
@@ -68,6 +73,7 @@ if __name__ == "__main__":
                 "scikit-learn",
                 "boto3",
                 "requests",
-            ]
+            ],
+            "env": env_vars,
         },
     )
