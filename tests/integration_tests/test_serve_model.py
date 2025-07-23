@@ -3,11 +3,14 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 import numpy as np
 
-with patch("api.serve_model.mlflow.pyfunc.load_model", return_value=MagicMock()), \
-     patch("api.serve_model.create_client", return_value=MagicMock()):
+with patch("api.serve_model.mlflow.pyfunc.load_model", return_value=MagicMock()), patch(
+    "api.serve_model.create_client", return_value=MagicMock()
+):
     from api.serve_model import app
     from fastapi.testclient import TestClient
+
     client = TestClient(app)
+
 
 @pytest.mark.integration
 @pytest.fixture
@@ -25,6 +28,7 @@ def sample_json_input():
         "TimeSunSet": "18:38:00",
         "datetime": "2016-09-01T19:10:06",
     }
+
 
 @patch("api.serve_model.model")
 @patch("api.serve_model.load_and_prepare_data")
@@ -47,6 +51,7 @@ def test_predict_json(
     mock_preprocess.assert_called_once()
     mock_model.predict.assert_called_once()
     mock_log_supabase.assert_called_once()
+
 
 @patch("api.serve_model.model")
 @patch("api.serve_model.load_and_prepare_data")
@@ -79,6 +84,7 @@ def test_predict_csv(
     mock_model.predict.assert_called_once()
     mock_log_supabase.assert_called_once()
 
+
 def test_predict_csv_invalid_file_type():
     response = client.post(
         "/predict_csv", files={"file": ("test.txt", b"not,a,csv", "text/plain")}
@@ -86,11 +92,13 @@ def test_predict_csv_invalid_file_type():
     assert response.status_code == 400
     assert "Only CSV files are supported." in response.json()["detail"]
 
+
 def test_predict_json_invalid_data():
     invalid_data = {"invalid": "data"}
     response = client.post("/predict", json=invalid_data)
     assert response.status_code == 422
     assert "detail" in response.text
+
 
 @pytest.fixture(scope="session")
 def test_client():

@@ -21,10 +21,7 @@ def retrain_on_drift_distance_rmse():
 
 if __name__ == "__main__":
 
-    source = GitRepository(
-        url=REPO_URL,
-        branch="main"
-    )
+    source = GitRepository(url=REPO_URL, branch="main")
 
     main.from_source(
         source=source,
@@ -34,8 +31,15 @@ if __name__ == "__main__":
         work_pool_name="ml-pool",
         job_variables={
             "pip_packages": [
-                "pandas", "numpy", "prefect-aws", "supabase",
-                "mlflow", "scikit-learn", "scipy", "boto3", "requests",
+                "pandas",
+                "numpy",
+                "prefect-aws",
+                "supabase",
+                "mlflow",
+                "scikit-learn",
+                "scipy",
+                "boto3",
+                "requests",
             ],
             "env": env_vars,
         },
@@ -49,8 +53,13 @@ if __name__ == "__main__":
         work_pool_name="ml-pool",
         job_variables={
             "pip_packages": [
-                "pandas", "numpy", "prefect-aws",
-                "mlflow", "scikit-learn", "boto3", "requests",
+                "pandas",
+                "numpy",
+                "prefect-aws",
+                "mlflow",
+                "scikit-learn",
+                "boto3",
+                "requests",
             ],
             "env": env_vars,
         },
