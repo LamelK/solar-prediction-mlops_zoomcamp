@@ -1,6 +1,6 @@
 # Makefile for code quality
 
-.PHONY: lint format check deploy-prefect api-shell monitoring-shell api-debug monitoring-debug api-up monitoring-up test
+.PHONY: lint format check deploy-prefect api-shell monitoring-shell api-debug monitoring-debug api-up monitoring-up test install-hooks
 
 lint:
 	flake8 .
@@ -41,3 +41,6 @@ test:
 test-unit:
 	flake8 .
 	pytest --cov=. -m "not integration"
+
+install-hooks:
+	chmod +x .git/hooks/pre-push
