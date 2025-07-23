@@ -24,12 +24,12 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest pytest-cov python-dotenv
 
-      - name: Create .env file with dummy variables (for all tests)
-        run: |
-          echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env
-          echo "S3_BUCKET_NAME=dummy-bucket" >> .env
-          echo "SUPABASE_URL=https://dummy.supabase.co" >> .env
-          echo "SUPABASE_KEY=dummy-key" >> .env
+      # - name: Create .env file with dummy variables (for all tests)
+      #   run: |
+      #     # echo "MLFLOW_TRACKING_URI=http://dummy-mlflow:5000" >> .env
+      #     # echo "S3_BUCKET_NAME=dummy-bucket" >> .env
+      #     # echo "SUPABASE_URL=https://dummy.supabase.co" >> .env
+      #     # echo "SUPABASE_KEY=dummy-key" >> .env
 
       - name: List collected tests
         run: pytest --collect-only -m "not integration" -v
