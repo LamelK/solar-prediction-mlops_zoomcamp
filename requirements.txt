@@ -14,3 +14,4 @@ scipy
 prometheus-client
 evidently==0.6.7
 pytest-cov
+python-multipart
