@@ -4,6 +4,7 @@ from prefect import flow, task, get_run_logger
 
 PROMETHEUS_URL = "http://localhost:9090/api/v1/query"
 
+
 @task(name="Fetch Metric from Prometheus")
 def fetch_metric(metric_name: str) -> float | None:
     logger = get_run_logger()
