@@ -269,8 +269,7 @@ def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
     results["distribution_family"] = {
         "status": "OK",
         "message": (
-            "Distribution check removed - "
-            "focusing on parameters and significance"
+            "Distribution check removed - " "focusing on parameters and significance"
         ),
     }
 
@@ -350,8 +349,14 @@ def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
         results["statistical_test"] = {
             "status": "WARNING" if significant else "OK",
             "message": (
-                "p=" + str(p_display) + " " +
-                ("< 0.05 (SIGNIFICANT)" if significant else "> 0.05 (NOT SIGNIFICANT)")
+                "p="
+                + str(p_display)
+                + " "
+                + (
+                    "< 0.05 (SIGNIFICANT)"
+                    if significant
+                    else "> 0.05 (NOT SIGNIFICANT)"
+                )
             ),
             "p_value": p_value,
             "significant": significant,
