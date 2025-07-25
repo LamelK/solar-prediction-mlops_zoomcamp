@@ -65,7 +65,7 @@ if __name__ == "__main__":
         source=source,
         entrypoint="retrain.py:retrain_on_drift_distance_rmse",
     ).deploy(
-        name="retrain-deployment",
+        name="retrain-pipeline",
         work_pool_name="ml-pool",
         job_variables={
             "pip_packages": [
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         source=source,
         entrypoint="auto_retrain_monitor.py:check_metrics_and_retrain_flow",
     ).deploy(
-        name="auto-retrain-monitor",
+        name="auto-retrain-monitor-pipeline",
         work_pool_name="ml-pool",
         job_variables={
             "pip_packages": [
