@@ -30,11 +30,6 @@ def retrain_on_drift_distance_rmse():
     print("Running retraining pipeline")
 
 
-@flow(log_prints=True)
-def auto_retrain_monitor():
-    print("Running auto retraining pipeline")
-
-
 if __name__ == "__main__":
 
     source = GitRepository(url=REPO_URL, commit_sha=COMMIT_HASH)
@@ -66,26 +61,6 @@ if __name__ == "__main__":
         entrypoint="retrain.py:retrain_on_drift_distance_rmse",
     ).deploy(
         name="retrain-pipeline",
-        work_pool_name="ml-pool",
-        job_variables={
-            "pip_packages": [
-                "pandas",
-                "numpy",
-                "prefect-aws",
-                "mlflow",
-                "scikit-learn",
-                "boto3",
-                "requests",
-            ],
-            "env": env_vars,
-        },
-    )
-
-    auto_retrain_monitor.from_source(
-        source=source,
-        entrypoint="auto_retrain_monitor.py:check_metrics_and_retrain_flow",
-    ).deploy(
-        name="auto-retrain-monitor-pipeline",
         work_pool_name="ml-pool",
         job_variables={
             "pip_packages": [

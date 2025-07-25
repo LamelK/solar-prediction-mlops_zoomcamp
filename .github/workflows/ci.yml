@@ -56,6 +56,7 @@ jobs:
           echo "S3_NEW_DATA_KEY=${{ secrets.S3_NEW_DATA_KEY }}" >> .env
           echo "S3_PROCESSED_DATA_KEY=${{ secrets.S3_PROCESSED_DATA_KEY }}" >> .env
           echo "SOURCE_REPO=https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git" >> .env
+          echo "PROMETHEUS_URLS=${{ secrets.PROMETHEUS_URLS }}" >> .env
           echo "GIT_COMMIT_HASH=${{ github.sha }}" >> .env 
 
       - name: Deploy Prefect Flows
