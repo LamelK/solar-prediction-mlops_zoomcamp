@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY monitoring/ ./monitoring/
 COPY mlpipeline/ ./mlpipeline/
 COPY config.py .
+COPY .env .
 
 # Set PYTHONPATH so config.py is importable
 ENV PYTHONPATH=/app

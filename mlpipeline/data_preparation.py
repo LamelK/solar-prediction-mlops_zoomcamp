@@ -11,7 +11,7 @@ from dotenv import load_dotenv  # type: ignore
 load_dotenv()
 
 
-@task(name="Load Data from S3")
+@task(name="Load Data from S3", retries=1, retry_delay_seconds=10)
 def load_data_s3(bucket_name, file_key, aws_profile=None):
     """
     Loads a CSV file from S3 into a pandas DataFrame.
@@ -33,7 +33,7 @@ def load_data_s3(bucket_name, file_key, aws_profile=None):
     return df
 
 
-@task(name="Upload processed data to S3")
+@task(name="Upload processed data to S3", retries=1, retry_delay_seconds=10)
 def upload_df_to_s3(df: pd.DataFrame, bucket: str, key: str):
     """
     Uploads a DataFrame as a CSV to the specified S3 bucket and key.

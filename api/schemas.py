@@ -18,6 +18,5 @@ class RawInputData(BaseModel):
     Speed: float = Field(..., json_schema_extra={"example": 7.87})
     TimeSunRise: str = Field(..., json_schema_extra={"example": "06:46:00"})
     TimeSunSet: str = Field(..., json_schema_extra={"example": "17:44:00"})
-    datetime: str = Field(..., json_schema_extra={"example": "2016-12-09 15:55:52"})
 
     model_config = ConfigDict(validate_assignment=True)

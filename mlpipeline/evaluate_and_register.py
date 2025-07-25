@@ -82,7 +82,11 @@ def register_best_model(best_run, registry_model_name="MyTopModel"):
     return version
 
 
-@flow(name="Evaluate and Register Best Model")
+@flow(
+    name="Evaluate and Register Best Model to Model Registry",
+    retries=1,
+    retry_delay_seconds=10,
+)
 def evaluate_and_register(logged_runs, X_test, y_test):
     """
     Evaluate the models on the test set, log their metrics,

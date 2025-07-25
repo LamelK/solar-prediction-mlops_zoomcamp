@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-@task(name="Setup MLflow")
+@task(name="Setup MLflow", retries=1, retry_delay_seconds=10)
 def setup_mlflow(tracking_uri=None, experiment_name=None):
     """
     Configures MLflow tracking URI and experiment name.
@@ -32,7 +32,7 @@ def setup_mlflow(tracking_uri=None, experiment_name=None):
     logger.info("MLflow configured successfully")
 
 
-@task(name="Log Models to MLflow")
+@task(name="Log Models to MLflow", retries=1, retry_delay_seconds=10)
 def log_models_to_mlflow(all_runs, X_val):
     """
     Logs a list of trained models and their parameters/metrics to MLflow.

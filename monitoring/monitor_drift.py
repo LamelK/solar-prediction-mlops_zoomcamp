@@ -143,9 +143,13 @@ column_drift_gauges = {
     if col not in ["id", "datetime"]
 }
 
+# Add RMSE Prometheus metrics
+rmse_gauge = Gauge("model_rmse", "Root Mean Squared Error of model predictions")
+rmse_pct_gauge = Gauge("model_rmse_pct", "RMSE as percent of radiation range")
+
 # Get distance threshold from configuration
 DISTANCE_FEATURE_THRESHOLD = monitoring_config["distance_feature_threshold"]
-MONITORING_INTERVAL = monitoring_config["interval"]
+MONITORING_INTERVAL = 60  # 1 minute in seconds
 CONFIDENCE_LEVEL = 0.05  # 95% confidence level (standard in statistics)
 
 print(f"Using distance feature threshold: {DISTANCE_FEATURE_THRESHOLD}")
@@ -239,16 +243,11 @@ def check_statistical_significance(baseline_series, recent_series, feature_name)
 
 def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
     """
-    Enhanced drift detection with scaling and combined logic:
-    1. Distribution family check (removed)
-    2. Parameter drift analysis (with scaling)
-    3. Statistical significance test
-    4. Combined logic: p < 0.05 AND scaled_distance > threshold
+    Enhanced drift detection using scaled parameter comparison and statistical test.
     """
     from scipy import stats
     from sklearn.preprocessing import StandardScaler
 
-    # Remove NaN values
     baseline_clean = baseline_series.dropna()
     recent_clean = recent_series.dropna()
 
@@ -266,64 +265,52 @@ def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
         "overall_status": "OK",
     }
 
-    # Level 1: Distribution Family Check - REMOVED
+    # Distribution check removed; focus on parameters and significance
     results["distribution_family"] = {
         "status": "OK",
         "message": (
-            "Distribution check removed\n" "- focusing on parameters and significance"
+            "Distribution check removed - "
+            "focusing on parameters and significance"
         ),
     }
 
-    # Level 2: Parameter Drift Analysis (with scaling)
     try:
-        # Scale the data using StandardScaler for fair comparison across features
         scaler = StandardScaler()
-
-        # Fit scaler on baseline data
         baseline_scaled = scaler.fit_transform(
             baseline_clean.values.reshape(-1, 1)
         ).flatten()
         recent_scaled = scaler.transform(recent_clean.values.reshape(-1, 1)).flatten()
 
-        # Calculate statistics on scaled data
-        baseline_mean_scaled, baseline_std_scaled = (
-            np.mean(baseline_scaled),
-            np.std(baseline_scaled),
-        )
-        recent_mean_scaled, recent_std_scaled = (
-            np.mean(recent_scaled),
-            np.std(recent_scaled),
-        )
+        baseline_mean_scaled = np.mean(baseline_scaled)
+        baseline_std_scaled = np.std(baseline_scaled)
+        recent_mean_scaled = np.mean(recent_scaled)
+        recent_std_scaled = np.std(recent_scaled)
 
-        # Calculate absolute changes on scaled data (fair comparison across features)
-        # After scaling, baseline should have mean≈0 and std≈1,
-        # so we use absolute differences
         mean_change = abs(recent_mean_scaled - baseline_mean_scaled)
         std_change = abs(recent_std_scaled - baseline_std_scaled)
 
-        # Also keep original unscaled values for reference
-        baseline_mean_orig, baseline_std_orig = (
-            np.mean(baseline_clean),
-            np.std(baseline_clean),
-        )
-        recent_mean_orig, recent_std_orig = np.mean(recent_clean), np.std(recent_clean)
+        baseline_mean_orig = np.mean(baseline_clean)
+        baseline_std_orig = np.std(baseline_clean)
+        recent_mean_orig = np.mean(recent_clean)
+        recent_std_orig = np.std(recent_clean)
 
-        # Calculate combined distance metric (max of mean and std change)
         combined_distance = max(mean_change, std_change)
-
-        # Set a reasonable threshold for scaled data (not too strict)
-        SCALED_DISTANCE_THRESHOLD = 0.3  # 0.3 standard deviations change
+        SCALED_DISTANCE_THRESHOLD = DISTANCE_FEATURE_THRESHOLD
 
         if combined_distance > SCALED_DISTANCE_THRESHOLD:
             param_status = "WARNING"
-            param_message = f"Scaled distance: {combined_distance:.2f} > "
-            f"{SCALED_DISTANCE_THRESHOLD} "
-            f"(mean:{mean_change:.2f}, std:{std_change:.2f})"
+            param_message = (
+                f"Scaled distance: {combined_distance:.2f} > "
+                f"{SCALED_DISTANCE_THRESHOLD} (mean:{mean_change:.2f}, "
+                f"std:{std_change:.2f})"
+            )
         else:
             param_status = "OK"
-            param_message = f"Scaled distance: {combined_distance:.2f} <= "
-            f"{SCALED_DISTANCE_THRESHOLD} "
-            f"(mean:{mean_change:.2f}, std:{std_change:.2f})"
+            param_message = (
+                f"Scaled distance: {combined_distance:.2f} <= "
+                f"{SCALED_DISTANCE_THRESHOLD} (mean:{mean_change:.2f}, "
+                f"std:{std_change:.2f})"
+            )
 
         results["parameter_drift"] = {
             "status": param_status,
@@ -351,23 +338,21 @@ def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
             "combined_distance": 0,
         }
 
-    # Level 3: Statistical Significance Test
     try:
         statistic, p_value = stats.ks_2samp(baseline_clean, recent_clean)
         significant = p_value < CONFIDENCE_LEVEL
 
-        # Format p-value to avoid misleading 0.0000
         if p_value < 0.0001:
             p_display = "<0.0001"
         else:
-            p_display = f"{p_value:.6f}".rstrip("0").rstrip(
-                "."
-            )  # Show exact value without trailing zeros
+            p_display = f"{p_value:.6f}".rstrip("0").rstrip(".")
 
         results["statistical_test"] = {
             "status": "WARNING" if significant else "OK",
-            "message": f"p={p_display} "
-            f"{'< 0.05 (SIGNIFICANT)' if significant else '> 0.05 (NOT SIGNIFICANT)'}",
+            "message": (
+                "p=" + str(p_display) + " " +
+                ("< 0.05 (SIGNIFICANT)" if significant else "> 0.05 (NOT SIGNIFICANT)")
+            ),
             "p_value": p_value,
             "significant": significant,
         }
@@ -379,23 +364,17 @@ def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
             "significant": False,
         }
 
-    # NEW: Combined drift detection logic
-    # Only mark as drift if BOTH statistical significance
-    # AND scaled distance threshold are met
     p_value = results["statistical_test"].get("p_value", 1.0)
     combined_distance = results["parameter_drift"].get("combined_distance", 0.0)
-    SCALED_DISTANCE_THRESHOLD = 0.3  # Use 0.3 as requested
 
-    # Combined logic: p < 0.05 AND scaled_distance > 0.3
     if p_value < CONFIDENCE_LEVEL and combined_distance > SCALED_DISTANCE_THRESHOLD:
-        if combined_distance > 1.0:  # High distance (>1 std dev)
+        if combined_distance > 1.0:
             results["overall_status"] = "CRITICAL"
-        else:  # Moderate distance (0.3-1.0 std dev)
+        else:
             results["overall_status"] = "WARNING"
     else:
         results["overall_status"] = "OK"
 
-    # Add combined logic details
     results["combined_logic"] = {
         "p_value": p_value,
         "combined_distance": combined_distance,
@@ -410,7 +389,7 @@ def enhanced_drift_analysis(baseline_series, recent_series, feature_name):
 
 
 def fetch_recent_data():
-    response = supabase.table("model_logs").select("*").limit(1000).execute()
+    response = supabase.table("model_logs").select("*").limit(1200).execute()
     data = response.data
     return pd.DataFrame(data)
 
@@ -598,7 +577,9 @@ def update_metrics():
         print(f"Failed to save/upload HTML report: {e}")
 
     # Print full JSON drift result for debugging
-    print(json.dumps(result["metrics"][0]["result"], indent=2))
+    drift_json = result["metrics"][0]["result"].copy()
+    drift_json.pop("drift_share", None)  # Remove legacy/unused field if present
+    print(json.dumps(drift_json, indent=2))
 
     # For RMSE: use the original 'recent' DataFrame (with UNIXTime) and ground truth
     # Do NOT drop/exclude UNIXTime from these DataFrames
@@ -653,6 +634,10 @@ def compute_rmse_with_ground_truth(recent):
     )
     rmse_percentage = (rmse / radiation_range) * 100 if radiation_range > 0 else 0
 
+    # Set Prometheus metrics
+    rmse_gauge.set(rmse)
+    rmse_pct_gauge.set(rmse_percentage)
+
     print("📊 MODEL PERFORMANCE:")
     print(f"  RMSE: {rmse:.4f}")
     print(f"  Radiation range: {radiation_range:.2f}")
@@ -689,5 +674,5 @@ if __name__ == "__main__":
         drift_share, enhanced_share, recent = update_metrics()
         print(f"Drift Share: {drift_share:.2f}, Enhanced Share: {enhanced_share:.2f}")
         compute_rmse_with_ground_truth(recent)
-        print(f"Next check in {MONITORING_INTERVAL/300:.1f} minutes...")
+        print(f"Next check in {MONITORING_INTERVAL/60:.1f} minutes...")
         time.sleep(MONITORING_INTERVAL)
