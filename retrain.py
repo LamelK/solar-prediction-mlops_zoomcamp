@@ -158,6 +158,7 @@ def get_config():
     new_data_key = s3_config["new_data_key"]
     return bucket, baseline_key, new_data_key
 
+
 @task(task_run_name="save merged data to s3", retries=1, retry_delay_seconds=10)
 def save_df_to_s3(df, bucket, key):
     """
