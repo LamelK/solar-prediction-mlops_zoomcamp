@@ -44,3 +44,18 @@ test-unit:
 
 install-hooks:
 	chmod +x .git/hooks/pre-push
+
+# Python virtual environment automation
+.PHONY: venv venv-install venv-activate
+
+# Create a new virtual environment in ./venv
+venv:
+	python3 -m venv venv
+
+# Install requirements into the venv
+venv-install: venv
+	. ./venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+
+# Print activation command for the venv
+venv-activate:
+	@echo "Run: source ./venv/bin/activate"
