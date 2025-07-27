@@ -35,7 +35,7 @@ jobs:
         run: pytest --collect-only -m "not integration" -v
 
       - name: Lint and Test
-        run: bash run_tests.sh
+        run: make test-unit
 
       - name: Login to Prefect Cloud
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
