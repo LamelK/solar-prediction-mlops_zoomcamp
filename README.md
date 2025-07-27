@@ -187,7 +187,7 @@ solar-prediction-mlops_zoomcamp/
 - All trained models are **logged to MLflow** (validation metrics only).
 - MLflow stores all **artifacts in S3**.
 
-![]("images/orchestration.jpg")
+![](images/orchestration.jpg)
 
 #### 🔹 4. Model Selection & Evaluation
 - The **top 3 models** (lowest validation RMSE) are selected.
@@ -195,6 +195,8 @@ solar-prediction-mlops_zoomcamp/
 - The best performing model is:
   - Registered in MLflow as `best_model`.
   - **Promoted to Production**.
+
+  ![](images/evaluate.jpg)
 
 #### 🔹 5. Model Serving
 - **FastAPI** loads the latest production model from MLflow.
