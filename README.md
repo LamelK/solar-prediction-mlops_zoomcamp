@@ -172,7 +172,7 @@ solar-prediction-mlops_zoomcamp/
 ## Sequence Diagram
 ![](images/sequence_diagram.png)
 
-### Operation
+### Operatio
   The deployments are managed by a Prefect worker. One deployment is responsible for the initial model training pipeline, while the second is triggered later for retraining based on performance degradation and drift detection.
   ![](images/deployments.jpg)
 
@@ -199,21 +199,21 @@ solar-prediction-mlops_zoomcamp/
   - Registered in MLflow as `best_model`.
   - **Promoted to Production**.
 
-  <img src="images/evaluate.jpg" width="35%"/>
+  ![](images/evaluate.jpg)
+  ![](images/mlflow.jpg)
 
-  <img src="images/mlflow.jpg" width="65%"/>
 
 #### 🔹 5. Model Serving
 - **FastAPI** loads the latest production model from MLflow.
 - It makes predictions on **incoming inference data**.
   
-  <img src="images/api.jpg" width="45%"/>
+  <img src="images/api.jpg" width="65%"/>
 
 
 #### 🔹 6. Logging Inference Data
 - Input data and predictions are logged to a **PostgreSQL database** hosted on **Supabase**.
 
-  <img src="images/logs.jpg" width="65%"/>
+  ![](images/logs.jpg)
 
 #### 🔹 7. Monitoring & Drift Detection
 - **Evidently AI** fetches:
@@ -224,16 +224,13 @@ solar-prediction-mlops_zoomcamp/
 - **Grafana**:
   - Visualizes drift and model metrics.
   - Sends alerts to **Discord** if drift is detected.
-  - On average, the promoted models achieve an RMSE between 110 and 112. I’ve set a threshold of 160 for RMSE, but alerts are only sent when both the RMSE exceeds this threshold and the enhanced_drift_share value crosses a predefined limit.
+  - On average, the promoted models achieve an RMSE between 110 and 112. I’ve set a threshold of 170 for RMSE, but alerts are only sent when both the RMSE exceeds this threshold and the enhanced_drift_share value crosses a predefined limit.
     - The enhanced_drift_share is a custom metric that combines two aspects of data drift:
       - **Statistical Significance**: p_value < CONFIDENCE_LEVEL
       - **Parameter Distance (combined_distance > SCALED_DISTANCE_THRESHOLD)**: This is a custom metric calculated from the absolute changes in the scaled mean and scaled standard deviation between the baseline and recent data. If this **combined_distance** exceeds a predefined **SCALED_DISTANCE_THRESHOLD**, it indicates a notable shift in the core parameters of the feature's distribution.
 
-<p align="center">
-  <img src="images/dashboard.jpg" alt="Architecture" width="60%"/>
-  <img src="images/discord.jpg" alt="Orchestration" width="30%"/>
-</p>
-
+![](images/dashboard.jpg)
+![](images/discord.jpg)
 
 
 #### 🔹 8. Model Retraining
