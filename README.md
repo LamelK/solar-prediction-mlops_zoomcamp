@@ -68,7 +68,7 @@ This rich set of features provides the necessary context for a machine learning 
 
 ```
 solar-prediction-mlops_zoomcamp/
-├── 📄 Root Files
+├── Root Files
 │   ├── config.py                 # Main configuration settings
 │   ├── requirements.txt          # Python dependencies
 │   ├── pipeline.py               # Main ML pipeline orchestration
@@ -78,28 +78,28 @@ solar-prediction-mlops_zoomcamp/
 │   ├── Makefile                  # Build automation and commands
 │   └── README.md                 # Project documentation
 │
-├── 🤖 ML Pipeline (`mlpipeline/`)
+├── ML Pipeline (`mlpipeline/`)
 │   ├── data_preparation.py       # Data preprocessing and feature engineering
 │   ├── model_training.py         # Model training logic
 │   ├── evaluate_and_register.py  # Model evaluation and MLflow registration
 │   ├── model_logging.py          # MLflow logging utilities
 │   └── preprocessing_utils.py    # Preprocessing helper functions
 │
-├── 🚀 API Service (`api/`)
+├── API Service (`api/`)
 │   ├── serve_model.py            # FastAPI model serving
 │   ├── schemas.py                # Pydantic data schemas
 │   └── wait_for_mlflow_model.py  # Model loading utilities
 │
-├── 🧪 Testing (`tests/`)
+├── Testing (`tests/`)
 │   ├── unit_tests/               # Unit test modules
 │   └── integration_tests/        # Integration test modules
 │
-├── 📊 Data (`data/`)
+├── Data (`data/`)
 │   ├── training_data.csv         # Training dataset
 │   ├── inference_data.csv        # Inference dataset
 │   └── new_data/                 # New data for retraining
 │
-├── 🐳 Docker (`docker/`)
+├── Docker (`docker/`)
 │   ├── api/                      # API service Dockerfile
 │   ├── monitoring/               # Monitoring service Dockerfile
 │   ├── build.sh                  # Docker build script
@@ -107,7 +107,7 @@ solar-prediction-mlops_zoomcamp/
 │   └── start_monitoring_container.sh # Monitoring container startup
 │  
 │
-└── ☁️ Infrastructure (`terraform/`)
+└── Infrastructure (`terraform/`)
     ├── main.tf                   # Main Terraform configuration
     ├── variables.tf              # Terraform variables
     └── terraform.tfstate         # Current state
@@ -131,6 +131,57 @@ solar-prediction-mlops_zoomcamp/
 <img src="images/architecture_diagram.jpeg" alt="Architecture Diagram" width="600"/>
 
 ## Sequence Diagram
-<img src="images/sequence_diagram.png" alt="Sequence Diagram" width="800"/>
+![](images/sequence_diagram.png)
 
 ### Operation
+#### 🔹 1. Data Ingestion
+- Reference data is loaded from **Kaggle** to **Amazon S3**.
+- **S3** acts as the central data storage throughout the pipeline.
+
+#### 🔹 2. Data Processing
+- A **Prefect worker** pulls the raw data from S3.
+- Data is cleaned and transformed.
+- Processed data is saved back to **S3**.
+
+#### 🔹 3. Model Training
+- Multiple models are trained using the processed data.
+- All trained models are **logged to MLflow** (validation metrics only).
+- MLflow stores all **artifacts in S3**.
+
+#### 🔹 4. Model Selection & Evaluation
+- The **top 3 models** (lowest validation RMSE) are selected.
+- These are evaluated on the **test dataset**.
+- The best performing model is:
+  - Registered in MLflow as `best_model`.
+  - **Promoted to Production**.
+
+#### 🔹 5. Model Serving
+- **FastAPI** loads the latest production model from MLflow.
+- It makes predictions on **incoming inference data**.
+
+#### 🔹 6. Logging Inference Data
+- Input data and predictions are logged to a **PostgreSQL database** hosted on **Supabase**.
+
+#### 🔹 7. Monitoring & Drift Detection
+- **Evidently AI** fetches:
+  - Reference data from S3.
+  - Inference data from Supabase.
+- It calculates **data drift** metrics.
+- **Prometheus** scrapes all metrics.
+- **Grafana**:
+  - Visualizes drift and model metrics.
+  - Sends alerts to **Discord** if drift is detected.
+
+#### 🔹 8. Model Retraining
+- An ML engineer inspects the Grafana dashboards.
+- If drift is confirmed, they **trigger the retraining pipeline**.
+- The pipeline:
+  - Merges **reference + inference** data.
+  - Retrains models and re-selects the best one.
+  - Logs the new model to MLflow as **version `v2`**.
+
+#### 🔹 9. Model Reload
+- When **FastAPI refreshes**, it loads the **newly promoted production model** from MLflow (`v2`).
+
+## Installation
+

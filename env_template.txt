@@ -1,40 +1,60 @@
+# ============================
 # MLflow Configuration
-MLFLOW_TRACKING_URI=http://<mlflow-host>:<port>/
-MLFLOW_EXPERIMENT_NAME=<experiment-name>
+# ============================
+MLFLOW_TRACKING_URI=http://YOUR_EC2_PUBLIC_IP:5000/
+MLFLOW_EXPERIMENT_NAME=Model_Experiment
+MLFLOW_MODEL_NAME=MyTopModel
 
+# ============================
 # S3 Configuration
-S3_BUCKET_NAME=<s3-bucket-name>
-S3_ARTIFACT_PREFIX=<s3-artifact-prefix>
+# ============================
+S3_BUCKET_NAME=your-s3-bucket-name
+S3_ARTIFACT_PREFIX=mlflow-artifacts/
 
-# Model Configuration
-MLFLOW_MODEL_NAME=<mlflow-model-name>
-
+# ============================
 # Supabase Configuration
-SUPABASE_URL=https://<supabase-project>.supabase.co
-SUPABASE_KEY=<supabase-api-key>
+# ============================
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_KEY=your-supabase-api-key
 
+# ============================
 # Data Configuration
-S3_RAW_BASELINE_KEY=<path-to-raw-baseline-csv>
-S3_PROCESSED_DATA_KEY=<path-to-processed-csv>
-NEW_DATA_KEY=<path-to-new-data-csv>
+# ============================
+S3_RAW_BASELINE_KEY=raw-data/training_data.csv
+S3_PROCESSED_DATA_KEY=processed-data/training_data.csv
+S3_NEW_DATA_KEY=raw-data/new_data/new_data.csv
 
+# ============================
 # AWS Configuration
-AWS_REGION=<aws-region>
-AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
-AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
-AWS_DEFAULT_REGION=<aws-region>
+# ============================
+AWS_ACCESS_KEY_ID=your-aws-access-key-id
+AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+AWS_DEFAULT_REGION=us-west-1
 
+# ============================
 # Monitoring Configuration
-DISTANCE_FEATURE_THRESHOLD=<threshold-value>
-MONITORING_PORT=<monitoring-port>
-MONITORING_INTERVAL=<interval-in-seconds>
+# ============================
+DISTANCE_FEATURE_THRESHOLD=0.2
+MONITORING_PORT=8080
+MONITORING_INTERVAL=3600  # in seconds
 
+# ============================
 # API Configuration
+# ============================
 API_HOST=0.0.0.0
-API_PORT=<api-port>
-API_RELOAD=<true-or-false>
+API_PORT=8000
+API_RELOAD=True
+API_START_CMD=uvicorn api.serve_model:app --host 0.0.0.0 --port 8000
+RELOAD_SECRET=your-secret-key
 
-# Development/Environment Configuration
-ENVIRONMENT=<environment-name>
-DEBUG=<true-or-false>
-LOG_LEVEL=<log-level>
+# ============================
+# Environment & Logging
+# ============================
+ENVIRONMENT=development
+DEBUG=False
+LOG_LEVEL=INFO 
+
+# ============================
+# Project Repository
+# ============================
+SOURCE_REPO=https://github.com/your-username/your-repo-name.git
