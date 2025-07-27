@@ -1,5 +1,44 @@
 # Solar Radiation Prediction: An End-to-End MLOps Project
 
+## Table of Contents
+
+- [Project Description](#project-description)
+- [Problem Statement: Harnessing the Sun's Power, Reliably](#problem-statement-harnessing-the-suns-power-reliably)
+  - [Why an MLOps Pipeline is Our Sunny Solution](#why-an-mlops-pipeline-is-our-sunny-solution)
+- [Dataset Description](#dataset-description)
+- [Project Structure](#project-structure)
+- [Tech Stack](#tech-stack)
+- [Architecture Diagram](#architecture-diagram)
+- [Sequence Diagram](#sequence-diagram)
+- [Operation](#operation)
+  - [🔹 1. Data Ingestion](#-1-data-ingestion)
+  - [🔹 2. Data Processing](#-2-data-processing)
+  - [🔹 3. Model Training](#-3-model-training)
+  - [🔹 4. Model Selection & Evaluation](#-4-model-selection--evaluation)
+  - [🔹 5. Model Serving](#-5-model-serving)
+  - [🔹 6. Logging Inference Data](#-6-logging-inference-data)
+  - [🔹 7. Monitoring & Drift Detection](#-7-monitoring--drift-detection)
+  - [🔹 8. Model Retraining](#-8-model-retraining)
+  - [🔹 9. Model Reload](#-9-model-reload)
+- [Installation](#installation)
+  - [Python Environment Setup](#python-environment-setup)
+  - [Environment Setup](#environment-setup)
+  - [Supabase Setup](#supabase-setup)
+    - [Create Table in Supabase](#create-table-in-supabase)
+  - [AWS Configuration](#️-aws-configuration)
+  - [Initialize Infrastructure with Terraform](#initialize-infrastructure-with-terraform)
+  - [Simulate Data Ingestion](#simulate-data-ingestion)
+  - [Docker Services Setup](#-docker-services-setup)
+  - [Prefect Setup (Local Mode)](#-prefect-setup-local-mode)
+  - [Run the Pipeline Script](#-run-the-pipeline-script)
+  - [Test the Model API](#test-the-model-api)
+  - [Monitoring and Reporting](#-monitoring-and-reporting)
+  - [Trigger Retraining](#-trigger-retraining)
+  - [Repeat the Process](#repeat-the-process)
+  - [Clean Up](#clean-up)
+    - [Terraform](#terraform)
+    - [Docker](#docker)
+
 ## Project Description
 
 This project outlines an end-to-end Machine Learning Operations (MLOps) pipeline designed to accurately predict solar radiation levels. Leveraging historical weather and solar data, this system aims to provide reliable forecasts that can significantly enhance the efficiency and stability of solar energy generation and grid integration. From data ingestion and model training to continuous deployment and monitoring, this project demonstrates a robust framework for operationalizing machine learning models in a critical renewable energy domain.
@@ -148,6 +187,8 @@ solar-prediction-mlops_zoomcamp/
 - All trained models are **logged to MLflow** (validation metrics only).
 - MLflow stores all **artifacts in S3**.
 
+![]("images/orchestration.jpg")
+
 #### 🔹 4. Model Selection & Evaluation
 - The **top 3 models** (lowest validation RMSE) are selected.
 - These are evaluated on the **test dataset**.
@@ -183,5 +224,322 @@ solar-prediction-mlops_zoomcamp/
 #### 🔹 9. Model Reload
 - When **FastAPI refreshes**, it loads the **newly promoted production model** from MLflow (`v2`).
 
+
+
 ## Installation
 
+### Quick Navigation
+- [Python Environment Setup](#python-environment-setup)
+- [Environment Setup](#environment-setup)
+- [Supabase Setup](#supabase-setup)
+- [AWS Configuration](#️-aws-configuration)
+- [Initialize Infrastructure with Terraform](#initialize-infrastructure-with-terraform)
+- [Simulate Data Ingestion](#simulate-data-ingestion)
+- [Docker Services Setup](#docker-services-setup)
+- [Prefect Setup (Local Mode)](#prefect-setup-local-mode)
+- [Run the Pipeline Script](#-run-the-pipeline-script)
+- [Test the Model API](#test-the-model-api)
+- [Monitoring and Reporting](#-monitoring-and-reporting)
+- [Trigger Retraining](#-trigger-retraining)
+- [Repeat the Process](#repeat-the-process)
+- [Clean Up](#clean-up)
+
+### Python Environment Setup
+
+```bash
+make venv
+make venv-install
+source ./venv/bin/activate
+```
+
+---
+
+### Environment Setup
+
+Create a `.env` file and copy the template from `.env.template`.  
+You will need to replace the placeholders with your actual variables.
+
+For now, add your AWS credentials.
+
+There is a `RELOAD_SECRET`, where you can input your password.  
+This will be used for reloading the API to refresh and fetch the latest model after retraining.
+
+There's also a `SOURCE_REPO` variable. This is optional — only needed if you are going to make deployments to Prefect Cloud.  
+It allows the Prefect worker to access your flows from GitHub.
+
+> **Note:** This guide focuses mostly on running the scripts locally with a Prefect server.
+
+---
+
+### Supabase Setup
+
+First, create a Supabase account at [https://supabase.com/](https://supabase.com/).  
+You will be prompted to create a database with a password.
+
+Then:
+- Navigate to **Settings → API Keys**
+- Reveal and copy the **Service Role Key**
+- Paste this key in the `.env` file
+
+Also:
+- Navigate to **Project Overview**
+- Scroll down to **Project API**
+- Copy the project URL and paste it in your `.env`
+
+---
+
+#### Create Table in Supabase
+
+Go to the **SQL Editor** and run:
+
+```sql
+CREATE TABLE public.model_logs( 
+    id SERIAL PRIMARY KEY,
+    UNIXTime BIGINT,
+    Data TEXT,
+    Time TEXT,
+    Temperature FLOAT,
+    Pressure FLOAT,
+    Humidity FLOAT,
+    WindDirection_Degrees FLOAT,
+    Speed FLOAT,
+    TimeSunRise TEXT,
+    TimeSunSet TEXT,
+    datetime TEXT,
+    Radiation FLOAT
+);
+```
+
+---
+
+### ☁️ AWS Configuration
+
+Make sure you have AWS CLI configured on your system.
+
+Afterward, you'll be creating:
+- An **S3 bucket** to store data, model artifacts, and monitoring reports
+- An **EC2 t3.small** instance (~$1.50/day) to host MLflow
+
+Go to the Terraform directory:
+
+```bash
+cd terraform
+```
+
+Open `variables.tf`.
+
+You can change the S3 bucket name, but make sure it's unique (not already taken).  
+Also, add this value to your `.env`.
+
+---
+
+### Initialize Infrastructure with Terraform
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+Once the apply is complete, Terraform will output the MLflow URL.  
+Paste it in your `.env`.  
+Open it in your browser to confirm it's running. Also verify that the S3 bucket was created successfully.
+
+---
+
+### Simulate Data Ingestion
+
+The `data/` directory is already prepared in this repo.  
+It simulates ingestion from Kaggle to S3, and includes:
+- Initial training data
+- New data for retraining
+
+Upload the data to S3:
+
+```bash
+aws s3 sync ./data s3://your-bucket-name/raw-data/
+```
+
+Make sure AWS CLI is installed to execute this command.
+
+---
+
+### Docker Services Setup
+
+Open Docker Desktop to start the engine
+
+Then build the containers:
+
+```bash
+docker-compose build --no-cache
+```
+
+> ⏳ This will take around **15–20 minutes**.
+
+Once built, start the containers:
+
+```bash
+docker-compose up
+```
+
+This will pull the **Grafana** and **Prometheus** images before running.
+
+### Service URLs:
+
+- FastAPI (Model): [http://localhost:8000/](http://localhost:8000/docs)
+- Evidently AI: [http://localhost:8080/metrics](http://localhost:8080/metrics)
+- Prometheus: [http://localhost:9090/](http://localhost:9090/)
+- Grafana: [http://localhost:3000/](http://localhost:3000/)  
+  **Login:** `admin` / `admin`
+
+---
+
+### Prefect Setup (Local Mode)
+
+In this project, I used **Prefect Cloud**.  
+This required me to:
+- Sign up at Prefect Cloud
+- Create an API key
+- Get a Prefect login URL
+- Create a **Prefect Managed Worker** (hosted by Prefect)  
+  This worker runs deployments and fetches flows from GitHub.
+- Configure CI/CD for deployments to prefect cloud
+
+However, to avoid extra complexity you can run scripts **locally**, 
+The scripts replicate what the Prefect worker would do as they are
+wrapped with prefect,so you will be able to observe the orchestration in
+the prefect server ui
+
+> ⚠️ If you were logged into Prefect Cloud, log out first:
+
+```bash
+prefect cloud logout
+```
+
+Then set the local API URL:
+
+```bash
+prefect config set PREFECT_API_URL="http://localhost:4200/"
+```
+
+Start the local Prefect server:
+
+```bash
+prefect server start
+```
+
+---
+
+### 🚀 Run the Pipeline Script
+
+```bash
+python pipeline.py
+```
+
+This script:
+- Fetches data from S3
+- Runs the full training process
+- Logs models to MLflow
+- Stores artifacts in the S3 bucket
+- Logs orchestration in the Prefect UI
+- Uses SQLite DB on the EC2 EBS volume
+
+>  This script can take 3-6 min, depending on your internet speed and hardware
+
+---
+
+### Test the Model API
+
+Now that the model is logged to MLflow and stored in S3, the API will automatically load this model for serving predictions.
+Visit:
+
+- [http://localhost:8000/](http://localhost:8000/)
+- [http://localhost:8000/docs](http://localhost:8000/docs)
+
+Use the test CSV in the `data/` folder to submit for predictions.
+
+After the model finishes predicting, the results are logged to Supabase.
+- Visit Supabase to view entries in the `model_logs` table
+
+The `Evidently AI` container compares this live data with baseline data for drift detection.
+
+You can also use `inference_data.csv` for **batch prediction**.  
+This may take around **3–5 minutes** to complete.
+
+---
+
+### 📈 Monitoring and Reporting
+
+- Monitoring reports are stored in the S3 bucket.
+- Open Grafana: [http://localhost:3000/](http://localhost:3000/)
+- For login, use:
+    Username: admin
+    Password: admin
+- You can now create your dashboard using the metrics served by EvidentlyAI(`enhanced_drift_share`, `model_rmse`, `model_rmse_pct`, `critical_drift_count`, `feature_mean_change`,`feature_drift_status`, etc)
+- When creating a dashboard in Grafana, you’ll be prompted to select a data source, choose the Prometheus database.t
+
+> I configured my Grafana to send alerts to Discord.
+
+---
+
+### 🔁 Trigger Retraining
+
+Run:
+
+```bash
+python retrain.py
+```
+
+This:
+- Merges reference data + new inference data
+- Repeats the training process
+- Registers a new updated model version in MLflow
+
+You can view the new experiments and model registry in MLflow UI.
+
+---
+
+### Repeat the Process
+
+If you'd like to repeat the entire process:
+
+1. **Delete the `raw-data` folder** in your S3 bucket.
+2. Re-upload the local `data/` directory:
+
+```bash
+aws s3 sync ./data s3://your-data-bucketname/raw-data/
+```
+
+> The pipeline merges reference + new data and archives the new data after each retrain.
+
+---
+
+###  Clean Up
+
+#### Terraform
+- **Before destroying**, make sure to delete all contents inside the S3 bucket manually.
+- Then run:
+
+```bash
+cd terraform
+terraform destroy
+```
+
+---
+
+#### Docker
+
+```bash
+docker-compose down --volumes --remove-orphans
+
+docker rmi -f grafana/grafana prom/prometheus
+
+docker rmi -f solar-prediction-mlops_zoomcamp-api-service
+
+docker rmi -f solar-prediction-mlops_zoomcamp-monitoring
+```
+
+This stops and removes:
+- All containers from the project
+- Associated volumes
+- All relevant images
