@@ -174,7 +174,7 @@ solar-prediction-mlops_zoomcamp/
 - **Github Actions**: Automates CI/CD workflows for testing, building, and deploying ML services.
 
 ## **Architecture Diagram**
-<img src="images/architecture_diagram.jpeg" alt="Architecture Diagram" width="600"/>
+<img src="images/architecture_diagram.png" alt="Architecture Diagram" width="600"/>
 
 ## **Sequence Diagram**
 ![](images/sequence_diagram.png)
