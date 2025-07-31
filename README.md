@@ -4,7 +4,7 @@
 
 - [**Project Description**](#project-description)
 - [**Problem Statement: Harnessing the Sun's Power, Reliably**](#problem-statement-harnessing-the-suns-power-reliably)
-  - [**Why an MLOps Pipeline is Our Sunny Solution**](#why-an-mlops-pipeline-is-our-sunny-solution)
+  - [**Why an MLOps Pipeline is the Sunny Solution**](#why-an-mlops-pipeline-is-the-sunny-solution)
 - [**Dataset Description**](#dataset-description)
 - [**Project Structure**](#project-structure)
 - [**Tech Stack**](#tech-stack)
@@ -30,20 +30,20 @@
   - [**AWS Configuration**](#️-aws-configuration)
   - [**Initialize Infrastructure with Terraform**](#initialize-infrastructure-with-terraform)
   - [**Simulate Data Ingestion**](#simulate-data-ingestion)
-  - [**Docker Services Setup**](#docker-services-setup)
-  - [**Prefect Setup (Local Mode)**](#prefect-setup-local-mode)
+  - [**Prefect Setup**](#prefect-setup)
   - [**Run the Pipeline Script**](#run-the-pipeline-script)
+  - [**Docker Services Setup**](#docker-services-setup)
   - [**Test the Model API**](#test-the-model-api)
   - [**Monitoring and Reporting**](#monitoring-and-reporting)
   - [**Trigger Retraining**](#trigger-retraining)
   - [**Repeat the Process**](#repeat-the-process)
+  - [**Debugging**](#debugging)
   - [**Clean Up**](#clean-up)
     - [**Terraform**](#terraform)
     - [**Docker**](#docker)
 - [**Best Practices**](#best-practices)
 - [**Improvements and Recommendations**](#improvements-and-recommendations)
 - [**Conclusion**](#conclusion)
-- [**Licence**](#licence)
 
 ## **Project Description**
 
@@ -63,21 +63,21 @@ Currently, operating solar farms, integrating solar power into the grid, or even
 
 * **Suboptimal policy and investment:** Without reliable predictions, it's harder for governments and businesses to make informed decisions about investing in and integrating solar infrastructure.
 
-### **Why an MLOps Pipeline is Our Sunny Solution**
+### **Why an MLOps Pipeline is the Sunny Solution**
 
-This is where a **Machine Learning Operations (MLOps) pipeline** becomes our game-changer. We can train sophisticated machine learning models on historical weather and solar radiation data to accurately predict future solar output. But a model, no matter how good, isn't enough on its own. It's like having a brilliant chef without a fully equipped kitchen, a steady supply chain, or a reliable way to get the food to the table.
+This is where a **Machine Learning Operations (MLOps) pipeline** becomes the game-changer. Sophisticated machine learning models can be trained on historical weather and solar radiation data to accurately predict future solar output. But a model, no matter how good, isn't enough on its own. It's like having a brilliant chef without a fully equipped kitchen, a steady supply chain, or a reliable way to get the food to the table.
 
-An MLOps pipeline addresses this by providing the "kitchen" and "delivery system" for our solar prediction model. It would help us:
+An MLOps pipeline addresses this by providing the "kitchen" and "delivery system" for the solar prediction model. It helps by:
 
-* **Continuously improve predictions:** Weather patterns change, and our models need to learn from the latest data. MLOps automates the process of collecting new data, retraining models, and testing their accuracy, ensuring our predictions are always as sharp as possible.
+* **Continuously improving predictions:** Weather patterns change, and models need to learn from the latest data. MLOps automates the process of collecting new data, retraining models, and testing their accuracy, ensuring predictions are always as sharp as possible.
 
-* **Ensure reliability and consistency:** It provides a robust, automated way to deploy these models into production, making sure they're always running, accessible, and delivering predictions consistently, without manual intervention.
+* **Ensuring reliability and consistency:** It provides a robust, automated way to deploy these models into production, making sure they're always running, accessible, and delivering predictions consistently, without manual intervention.
 
-* **Monitor for performance issues:** Just like a car needs regular checks, models can degrade over time. An MLOps pipeline would automatically monitor our model's performance, alerting us if its predictions start to go off-track, allowing for quick adjustments.
+* **Monitoring for performance issues:** Just like a car needs regular checks, models can degrade over time. An MLOps pipeline automatically monitors model performance, alerting when predictions start to go off-track, allowing for quick adjustments.
 
-* **Scale effortlessly:** As more solar data becomes available or as our need for predictions grows (e.g., predicting for multiple locations), the pipeline can seamlessly scale to handle the increased load.
+* **Scaling effortlessly:** As more solar data becomes available or as the need for predictions grows (e.g., predicting for multiple locations), the pipeline can seamlessly scale to handle the increased load.
 
-Ultimately, by implementing an MLOps pipeline for solar radiation prediction, we move from reactive guesswork to **proactive, data-driven decision-making**. This empowers us to fully unlock the potential of solar energy, leading to a more stable, efficient, and sustainable power future.
+Ultimately, by implementing an MLOps pipeline for solar radiation prediction, the system moves from reactive guesswork to **proactive, data-driven decision-making**. This empowers the full potential of solar energy to be unlocked, leading to a more stable, efficient, and sustainable power future.
 
 ## **Dataset Description**
 
@@ -276,13 +276,14 @@ solar-prediction-mlops_zoomcamp/
 - [AWS Configuration](#️-aws-configuration)
 - [Initialize Infrastructure with Terraform](#initialize-infrastructure-with-terraform)
 - [Simulate Data Ingestion](#simulate-data-ingestion)
+- [Prefect Setup](#prefect-setup)
+- [Run the Pipeline Script](#run-the-pipeline-script)
 - [Docker Services Setup](#docker-services-setup)
-- [Prefect Setup (Local Mode)](#prefect-setup-local-mode)
-- [Run the Pipeline Script](#-run-the-pipeline-script)
 - [Test the Model API](#test-the-model-api)
-- [Monitoring and Reporting](#-monitoring-and-reporting)
-- [Trigger Retraining](#-trigger-retraining)
+- [Monitoring and Reporting](#monitoring-and-reporting)
+- [Trigger Retraining](#trigger-retraining)
 - [Repeat the Process](#repeat-the-process)
+- [Debugging](#debugging)
 - [Clean Up](#clean-up)
 
 > It is advisable to use WSL or a Linux environment for this installation.
@@ -303,12 +304,12 @@ Optionally, you can use Anaconda to initialize your environment.
 Create a `.env` file and copy the template from `.env.template`.  
 You will need to replace the placeholders with your actual variables.
 
-For now, add your AWS credentials.
+For now, add your AWS credentials and you can also edit the aws region to the region of your choices.
 
 There is a `RELOAD_SECRET`, where you can input your password.  
 This will be used for reloading the API to refresh and fetch the latest model after retraining.
 
-There's also a `SOURCE_REPO` variable. This is optional and is only needed if you are going to make deployments to Prefect Cloud as it allows the Prefect worker to access your flows from GitHub However, this guide focuses on running flows locally with a local Prefect server, without setting up deployments or a Prefect worker.
+There's also a `SOURCE_REPO` variable. This is optional and is only needed if you are going to make deployments to Prefect Cloud as it allows the Prefect worker to access your flows from GitHub However, this guide focuses only on running flows locally without setting up deployments or a Prefect worker.
 
 ---
 
@@ -327,6 +328,7 @@ Also:
 - Scroll down to **Project API**
 - Copy the project URL and paste it in your `.env` under the SUPERBASE_URL variable
 
+This setup is important without it the model api wont be able to run and log predictions.
 ---
 
 #### **Create Table in Supabase**
@@ -414,7 +416,7 @@ Make sure AWS CLI is installed to execute this command.
 
 ---
 
-### **Prefect Setup (Local Mode)**
+### **Prefect Setup**
 
 In this project, I used **Prefect Cloud**.  
 This required me to:
@@ -425,8 +427,7 @@ This required me to:
   This worker runs deployments and fetches flows from GitHub.
 - Configure CI/CD to automate deployments to Prefect Cloud, ensuring flows are registered, updated, and deployed from GitHub.
 
-
-However, To avoid extra complexity, you can run the scripts without creating a worker by following these steps:
+However, To avoid extra complexity of deploying flows via github actions, you can run the scripts without creating a worker by following these steps:
 
 1.Sign up or sign in at https://www.prefect.io/cloud
 
@@ -440,7 +441,7 @@ However, To avoid extra complexity, you can run the scripts without creating a w
 prefect cloud login -k <your_api_key>
 ```
 
-This will sync your environment with Prefect Cloud. After that, you can run the scripts directly and observe the orchestration on the prefect ui
+This will sync your environment with Prefect Cloud. After that, you can run the scripts directly and observe the orchestration on the prefect UI by navigating to **`runs`** or **`flows`**
 
 
 ### **Run the Pipeline Script**
@@ -463,11 +464,7 @@ This script:
 
 >  This script can take 3-6 min, depending on your internet speed and hardware
 
-The top model is now in the registry and will be loaded by the Docker FastAPI. However, Docker needs to be set up and running for this. Alternatively, you can run it locally.
-
-```bash
-uvicorn api.serve_model:app --reload --host 0.0.0.0 --port 8000
-```
+The top model is now in the mlflow registry and will be loaded by the Docker FastAPI. However, Docker needs to be set up and running for this. 
 
 ---
 
@@ -491,7 +488,7 @@ Once built, start the containers:
 docker-compose up
 ```
 
-This will pull the **Grafana** and **Prometheus** images before running.
+This will pull the **Grafana** and **Prometheus** images before running all containers.
 
 ### **Service URLs:**
 
@@ -576,29 +573,36 @@ aws s3 sync ./data s3://your-data-bucketname/raw-data/
 
 #### Docker images 
 ```bash
-docker compose logs api-service
-docker compose logs monitoring
-docker compose logs grafana
-docker compose logs prometheus
+make docker-logs-api
+make docker-logs-monitoring
+make docker-logs-grafana
+make docker-logs-prometheus
 ```
-Or to follow logs live:
+For more debug commands, view the Makefile
 
-```bash
-docker compose logs -f api-service
-```
-Check for running containers
-
-```bash
-docker compose ps
-```
 #### MLFlow
 If the MLFLOW_TRACKING_URI in the .env file is incorrect or missing, the setup_mlflow task might hang. Make sure the mlflow variable in .env is set to the correct server URL to avoid this issue.
+
+#### S3 Bucket
+- Before running scripts, upload files to S3 — this is key because your data will be pulled from there.
+- Make sure the bucket name matches your the bucket name in the command, AWS CLI is installed, and configured (aws configure).
+- Run the upload command from the project root directory.
+```bash
+aws s3 sync ./data s3://your-bucket-name/raw-data/
+```
+
+
+
 
 ### **Clean Up**
 
 #### **Terraform**
-- **Before destroying**, make sure to delete all contents inside the S3 bucket manually.
-- Then run:
+
+Before cleaning up make sure the S3 bucket is emptied.
+```bash
+aws s3 rm s3://your-bucket-name --recursive
+```
+Alternatively, you can manually delete using the aws console.
 
 ```bash
 cd terraform
@@ -610,13 +614,7 @@ terraform destroy
 #### **Docker**
 
 ```bash
-docker-compose down --volumes --remove-orphans
-
-docker rmi -f grafana/grafana prom/prometheus
-
-docker rmi -f solar-prediction-mlops_zoomcamp-api-service
-
-docker rmi -f solar-prediction-mlops_zoomcamp-monitoring
+make docker-clean-all
 ```
 
 This stops and removes:
@@ -626,7 +624,7 @@ This stops and removes:
 
 ---
 
-### **Best Practices**
+## **Best Practices**
 GitHub Actions CI/CD
   - Prefect deployments are triggered only after linting and unit tests pass. This ensures only validated flows get deployed to Prefect Cloud.
 
@@ -640,7 +638,7 @@ Terraform (IaC)
   - Infrastructure such as S3 buckets and EC2 instances is managed with Terraform, enabling fast, repeatable, and version-controlled cloud resource provisioning.
 
 
-### **Improvements and Recommendations**
+## **Improvements and Recommendations**
 Resource Monitoring
   - Extend monitoring beyond model performance to include infrastructure-level metrics like CPU, memory, and S3 usage. This helps in optimizing resource consumption and identifying bottlenecks early.
 
@@ -653,7 +651,7 @@ User-Facing Application
 Modeling Enhancements
   - The primary goal was to build a solid MLOps pipeline, so model sophistication was secondary. In future iterations, implementing advanced models (e.g., XGBoost, Neural networks, or ensemble methods) will improve accuracy and reduce retraining frequency by capturing complex nonlinear patterns in the data.
 
-### **Conclusion**
+## **Conclusion**
 This project implements a complete end-to-end MLOps pipeline that predicts solar radiation based on weather data; a task that is inherently complex due to the dynamic and unpredictable nature of weather patterns. Despite these challenges, the pipeline integrates data freshness, model monitoring, and retraining mechanisms to adapt to changing conditions and ensure reliable predictions.
 
 Special thanks to Alexey Grigorev and the DataTalks Club Zoomcamp for their invaluable learning materials and the supportive Slack community that made this project possible.
