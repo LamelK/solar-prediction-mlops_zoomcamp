@@ -285,6 +285,8 @@ solar-prediction-mlops_zoomcamp/
 - [Repeat the Process](#repeat-the-process)
 - [Clean Up](#clean-up)
 
+> It is advisable to use WSL or a Linux environment for this installation.
+
 ### **Python Environment Setup**
 
 ```bash
@@ -412,36 +414,6 @@ Make sure AWS CLI is installed to execute this command.
 
 ---
 
-### **Docker Services Setup**
-
-Open Docker Desktop to start the engine
-
-Then build the containers:
-
-```bash
-docker-compose build --no-cache
-```
-
-> ⏳ This will take around **15–20 minutes**.
-
-Once built, start the containers:
-
-```bash
-docker-compose up
-```
-
-This will pull the **Grafana** and **Prometheus** images before running.
-
-### **Service URLs:**
-
-- FastAPI (Model): [http://localhost:8000/](http://localhost:8000/docs)
-- Evidently AI: [http://localhost:8080/metrics](http://localhost:8080/metrics)
-- Prometheus: [http://localhost:9090/](http://localhost:9090/)
-- Grafana: [http://localhost:3000/](http://localhost:3000/)  
-  **Login:** `admin` / `admin`
-
----
-
 ### **Prefect Setup (Local Mode)**
 
 In this project, I used **Prefect Cloud**.  
@@ -466,6 +438,10 @@ Then set the local API URL:
 
 ```bash
 prefect config set PREFECT_API_URL="http://localhost:4200/"
+```
+
+```bash
+export PREFECT_API_URL=http://127.0.0.1:4200/api
 ```
 
 Start the local Prefect server:
@@ -495,6 +471,46 @@ This script:
 - Uses SQLite DB on the EC2 EBS volume
 
 >  This script can take 3-6 min, depending on your internet speed and hardware
+
+The top model is now in the registry and will be loaded by the Docker FastAPI. However, Docker needs to be set up and running for this. Alternatively, you can run it locally.
+
+```bash
+uvicorn api.serve_model:app --reload --host 0.0.0.0 --port 8000
+```
+
+---
+
+### **Docker Services Setup**
+
+This Docker setup builds two custom containers: the API container and the monitoring container and pulls two others: Grafana and Prometheus.
+
+Open Docker Desktop to start the engine
+
+Then build the containers:
+
+```bash
+docker-compose build --no-cache
+```
+
+> ⏳ This will take around **15–20 minutes**.
+
+Once built, start the containers:
+
+```bash
+docker-compose up
+```
+
+This will pull the **Grafana** and **Prometheus** images before running.
+
+### **Service URLs:**
+
+- FastAPI (Model): [http://localhost:8000/](http://localhost:8000/docs)
+- Evidently AI: [http://localhost:8080/metrics](http://localhost:8080/metrics)
+- Prometheus: [http://localhost:9090/](http://localhost:9090/)
+- Grafana: [http://localhost:3000/](http://localhost:3000/)  
+  **Login:** `admin` / `admin`
+
+---
 
 ---
 
@@ -565,6 +581,27 @@ aws s3 sync ./data s3://your-data-bucketname/raw-data/
 > The pipeline merges reference + new data and archives the new data after each retrain so to initiate the whole process again you need to delete the raw-data folder in S3 and re-upload it again
 
 ---
+### **Debugging**
+
+#### Docker images 
+```bash
+docker compose logs api-service
+docker compose logs monitoring
+docker compose logs grafana
+docker compose logs prometheus
+```
+Or to follow logs live:
+
+```bash
+docker compose logs -f api-service
+```
+Check for running containers
+
+```bash
+docker compose ps
+```
+#### MLFlow
+If the MLFLOW_TRACKING_URI in the .env file is incorrect or missing, the setup_mlflow task might hang. Make sure the mlflow variable in .env is set to the correct server URL to avoid this issue.
 
 ### **Clean Up**
 

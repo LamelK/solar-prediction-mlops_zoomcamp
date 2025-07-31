@@ -61,5 +61,6 @@ jobs:
       - name: Deploy Prefect Flows
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
+          USE_CLOUD: "true"
           GIT_COMMIT_HASH: ${{ github.sha }}
         run: python prefect_deployment.py 
