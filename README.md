@@ -425,32 +425,23 @@ This required me to:
   This worker runs deployments and fetches flows from GitHub.
 - Configure CI/CD to automate deployments to Prefect Cloud, ensuring flows are registered, updated, and deployed from GitHub.
 
-However, to avoid extra complexity, you can run the scripts locally.
-These scripts replicate what a Prefect worker does since they are wrapped with Prefect, allowing you to observe orchestration directly in the Prefect server UI.
 
-> ⚠️ If you were logged into Prefect Cloud, log out first:
+However, To avoid extra complexity, you can run the scripts without creating a worker by following these steps:
 
-```bash
-prefect cloud logout
-```
+1.Sign up or sign in at https://www.prefect.io/cloud
 
-Then set the local API URL:
+2.After signing in successfully, click the Prefect icon at the top left corner.
 
-```bash
-prefect config set PREFECT_API_URL="http://localhost:4200/"
-```
+3.Go to API Keys and create a new API key. You will receive the API key along with the login URL. Store them safely.
+
+4.In your environment terminal, use the login URL and API key to log in by running:
 
 ```bash
-export PREFECT_API_URL=http://127.0.0.1:4200/api
+prefect cloud login -k <your_api_key>
 ```
 
-Start the local Prefect server:
+This will sync your environment with Prefect Cloud. After that, you can run the scripts directly and observe the orchestration on the prefect ui
 
-```bash
-prefect server start
-```
-
----
 
 ### **Run the Pipeline Script**
 

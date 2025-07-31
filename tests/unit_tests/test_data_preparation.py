@@ -50,13 +50,18 @@ def mock_boto3_client():
 @patch("mlpipeline.data_preparation.clean_data")
 @patch("mlpipeline.data_preparation.load_data_s3")
 def test_load_and_prepare_data_flow(
-    mock_load_data, mock_clean_data, mock_feature_engineer, mock_upload,
-    mock_logger, mock_boto3_client
+    mock_load_data,
+    mock_clean_data,
+    mock_feature_engineer,
+    mock_upload,
+    mock_logger,
+    mock_boto3_client,
 ):
     mock_logger.return_value = MagicMock()
 
     # Create a real DataFrame from the sample CSV
     from io import StringIO
+
     sample_df = pd.read_csv(StringIO(SAMPLE_CSV))
 
     # Set up the mock chain
