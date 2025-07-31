@@ -14,7 +14,8 @@ scipy
 prometheus-client
 evidently==0.6.7
 pytest-cov
-python-multipartfastapi
+python-multipart
+fastapi
 uvicorn
 boto3
 python-multipart
