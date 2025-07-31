@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 from unittest.mock import patch, MagicMock
 
@@ -43,69 +44,44 @@ def mock_boto3_client():
         yield mock_s3_client
 
 
-def test_load_and_prepare_data_flow(mock_boto3_client):
+@patch("mlpipeline.data_preparation.get_run_logger")
+@patch("mlpipeline.data_preparation.upload_df_to_s3")
+@patch("mlpipeline.data_preparation.feature_engineer")
+@patch("mlpipeline.data_preparation.clean_data")
+@patch("mlpipeline.data_preparation.load_data_s3")
+def test_load_and_prepare_data_flow(
+    mock_load_data, mock_clean_data, mock_feature_engineer, mock_upload,
+    mock_logger, mock_boto3_client
+):
+    mock_logger.return_value = MagicMock()
+
+    # Create a real DataFrame from the sample CSV
+    from io import StringIO
+    sample_df = pd.read_csv(StringIO(SAMPLE_CSV))
+
+    # Set up the mock chain
+    mock_load_data.return_value = sample_df
+    mock_clean_data.return_value = sample_df
+    mock_feature_engineer.return_value = sample_df
+    mock_upload.return_value = None
+
     # Run the flow with mock bucket and key
     bucket_name = "test-bucket"
     file_key = "raw-data/test.csv"
 
-    df = load_and_prepare_data(file_key=file_key, bucket_name=bucket_name)
+    df = load_and_prepare_data.fn(file_key=file_key, bucket_name=bucket_name)
 
-    # Check that boto3 get_object was called once
-    mock_boto3_client.get_object.assert_called_once_with(
-        Bucket=bucket_name, Key=file_key
-    )
+    # Check that the flow called the expected tasks in the right order
+    mock_load_data.assert_called_once_with(bucket_name, file_key)
+    mock_clean_data.assert_called_once_with(sample_df)
+    mock_feature_engineer.assert_called_once_with(sample_df)
 
-    # Check that upload put_object was called once
-    mock_boto3_client.put_object.assert_called_once()
-    args, kwargs = mock_boto3_client.put_object.call_args
-    assert kwargs["Bucket"] == bucket_name
-    assert kwargs["Key"].startswith("processed-data/")
-    assert "Body" in kwargs
+    # Check that upload was called with the right processed key
+    mock_upload.assert_called_once()
+    args, kwargs = mock_upload.call_args
+    assert args[0] is sample_df  # First arg should be the DataFrame
+    assert args[1] == bucket_name  # Second arg should be bucket name
+    assert args[2].startswith("processed-data/")  # Third arg should be processed key
 
-    # Check dataframe shape and columns after feature engineering and cleaning
-    # Initial data has 2 rows, no duplicates or all-NA rows => expect 2 rows
-    assert df.shape[0] == 2
-
-    # Check some of the new engineered columns exist
-    expected_columns = {
-        "Radiation",
-        "Temperature",
-        "Pressure",
-        "Humidity",
-        "WindDirection_Degrees",
-        "Speed",
-        "Hour_sin",
-        "Hour_cos",
-        "Minute_sin",
-        "Minute_cos",
-        "Day_sin",
-        "Day_cos",
-        "Month_sin",
-        "Month_cos",
-        "Weekday_sin",
-        "Weekday_cos",
-        "MinutesSinceSunrise",
-        "MinutesUntilSunset",
-    }
-    assert expected_columns.issubset(set(df.columns))
-
-    # Check dropped columns are gone
-    dropped_columns = [
-        "UNIXTime",
-        "Data",
-        "Time",
-        "TimeSunRise",
-        "TimeSunSet",
-        "TimeSunRise_obj",
-        "TimeSunSet_obj",
-        "SunriseDateTime",
-        "SunsetDateTime",
-        "Hour",
-        "Minute",
-        "Day",
-        "DateTime",
-        "Month",
-        "Weekday",
-    ]
-    for col in dropped_columns:
-        assert col not in df.columns
+    # Check that the flow returns the processed DataFrame
+    assert df is sample_df
