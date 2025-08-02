@@ -53,9 +53,35 @@ docker-status:
 docker-stop:
 	docker stop solar-api-service solar-monitoring solar-grafana solar-prometheus
 
+# Stop individual containers
+docker-stop-api:
+	docker stop solar-api-service
+
+docker-stop-monitoring:
+	docker stop solar-monitoring
+
+docker-stop-grafana:
+	docker stop solar-grafana
+
+docker-stop-prometheus:
+	docker stop solar-prometheus
+
 # Start all project containers
 docker-start:
 	docker start solar-api-service solar-monitoring solar-grafana solar-prometheus
+
+# Start individual containers
+docker-start-api:
+	docker start solar-api-service
+
+docker-start-monitoring:
+	docker start solar-monitoring
+
+docker-start-grafana:
+	docker start solar-grafana
+
+docker-start-prometheus:
+	docker start solar-prometheus
 
 # Restart all project containers
 docker-restart:
