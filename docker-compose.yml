@@ -54,9 +54,6 @@ services:
     networks:
       - solar-network
     restart: unless-stopped
-    depends_on:
-      api-service:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/metrics"]
       interval: 30s

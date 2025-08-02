@@ -3,17 +3,31 @@ import mlflow.sklearn
 from mlflow.models.signature import infer_signature
 from prefect import task, get_run_logger
 import os
+import requests
 from dotenv import load_dotenv
 
 # Load environment variables from .env if present
 load_dotenv()
 
 
+def validate_mlflow_connection(tracking_uri, timeout=30):
+    """
+    Validate MLflow connection with timeout to prevent hanging.
+    """
+    try:
+        # Test connection to MLflow server
+        response = requests.get(f"{tracking_uri}/health", timeout=timeout)
+        return response.status_code == 200
+    except requests.exceptions.RequestException:
+        return False
+
+
 @task(name="Setup MLflow", retries=1, retry_delay_seconds=10)
-def setup_mlflow(tracking_uri=None, experiment_name=None):
+def setup_mlflow(tracking_uri=None, experiment_name=None, timeout=30):
     """
     Configures MLflow tracking URI and experiment name.
     Uses environment variable if tracking_uri is not provided.
+    Includes timeout validation to prevent hanging on invalid URLs.
     """
     logger = get_run_logger()
     if tracking_uri is None:
@@ -26,10 +40,25 @@ def setup_mlflow(tracking_uri=None, experiment_name=None):
         f"Setting MLflow tracking URI: {tracking_uri} and experiment: {experiment_name}"
     )
 
-    # Set MLflow tracking URI and experiment
-    mlflow.set_tracking_uri(tracking_uri)
-    mlflow.set_experiment(experiment_name)
-    logger.info("MLflow configured successfully")
+    # Validate MLflow connection before proceeding
+    logger.info("Validating MLflow connection...")
+    if not validate_mlflow_connection(tracking_uri, timeout):
+        raise ConnectionError(
+            f"Failed to connect to MLflow server at {tracking_uri} "
+            f"within {timeout} seconds. "
+            f"Please check the URL and ensure the MLflow server is running."
+        )
+
+    # Set MLflow tracking URI and experiment with timeout protection
+    try:
+        mlflow.set_tracking_uri(tracking_uri)
+        mlflow.set_experiment(experiment_name)
+        logger.info("MLflow configured successfully")
+    except Exception as e:
+        raise ConnectionError(
+            f"Failed to configure MLflow: {str(e)}. "
+            f"Please check the tracking URI and experiment name."
+        )
 
 
 @task(name="Log Models to MLflow", retries=1, retry_delay_seconds=10)
