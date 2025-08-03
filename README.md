@@ -628,6 +628,9 @@ This stops and removes:
 GitHub Actions CI/CD
   - Prefect deployments are triggered only after linting and unit tests pass. This ensures only validated flows get deployed to Prefect Cloud.
 
+Tests
+  - Implemented unit tests and integration tests to ensure core functionality is reliable and edge cases are covered.
+
 Linting & Formatting
   - Code is auto-formatted and linted using Black and Flake8 to enforce PEP8 standards and maintain clean, readable code.
 
