@@ -584,7 +584,7 @@ For more debug commands, view the Makefile
 If the MLFLOW_TRACKING_URI in the .env file is incorrect or missing, the setup_mlflow task might hang. Make sure the mlflow variable in .env is set to the correct server URL to avoid this issue.
 
 #### S3 Bucket
-- Before running scripts, upload files to S3 — this is key because your data will be pulled from there.
+- Before running scripts, upload files to S3, this is key because your data will be pulled from there.
 - Make sure the bucket name matches your the bucket name in the command, AWS CLI is installed, and configured (aws configure).
 - Run the upload command from the project root directory.
 ```bash
