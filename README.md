@@ -291,6 +291,11 @@ solar-prediction-mlops_zoomcamp/
 ### **Python Environment Setup**
 
 ```bash
+git clone https://github.com/LamelK/solar-prediction-mlops_zoomcamp.git
+cd solar-prediction-mlops_zoomcamp
+```
+
+```bash
 make venv
 make venv-install
 source ./venv/bin/activate
